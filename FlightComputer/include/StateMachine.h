@@ -3,8 +3,8 @@
 
 #include "Comms.h"
 
-#define WORK_HANDLER() exec(state_machine, state)
-#define EVENT_HANDLER() event_handler(state_machine, state)
+#define WORK_HANDLER() exec()
+#define EVENT_HANDLER() event_handler()
 
 #define MAX_WORK_SIZE 10
 #define MAX_EVENT_SIZE 10
@@ -44,11 +44,12 @@ typedef struct
     rocket_state_t *comms;
 } State_t;
 
+extern rocket_state_t state; 
 extern rocket_state_t comm_transition[rocket_state_size][cmd_size]; //save transition state for communication
 extern State_t state_machine[rocket_state_size]; 
 
 
-rocket_state_t event_handler(State_t * states, rocket_state_t state);
-bool exec(State_t * states, rocket_state_t state);
+rocket_state_t event_handler();
+bool exec();
 
 #endif
