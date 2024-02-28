@@ -88,7 +88,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x3131;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -107,7 +107,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -137,7 +137,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -158,12 +158,12 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[0] = ARN_TRIGGER_1;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             //stage 2
             int error = 0;
             command_t* arm_cmd;
-            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_2)
             {
@@ -172,10 +172,10 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_2;
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             //stage 3
-            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_3)
             {
@@ -184,7 +184,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_3;
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -193,7 +193,7 @@ int run_command(command_t* cmd, rocket_state_t state)
         case CMD_ADD_WORK:
         case CMD_REMOVE_WORK:
         {
-            static uint8_t working_index[work_enum_size] = {-1}; 
+            static int8_t working_index[work_enum_size] = {-1}; 
             static void(*work[work_enum_size])(void) = {logger, pressure_safety};
             
             if(cmd->size < 3) return CMD_RUN_OUT_OF_BOUND;
@@ -235,7 +235,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -247,7 +247,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
 
             return CMD_RUN_OK;
         }
@@ -261,6 +261,8 @@ int run_command(command_t* cmd, rocket_state_t state)
                 return CMD_RUN_OUT_OF_BOUND;
         break;
     };
+
+    return CMD_RUN_OUT_OF_BOUND;
 
     
     //Serial.printf("cmd: %x state: %d return state %d table: %d\n", cmd->cmd, state, return_state,
@@ -324,7 +326,6 @@ void setup() {
 }
 
 void loop() {
-    static rocket_state_t state = IDLE; 
     rocket_state_t work_state    = state, \
                    command_state = state, \
                    event_state   = state; 
@@ -347,7 +348,7 @@ void loop() {
     int error;
 
     //check if we have new data
-    command_t* cmd = read_command(&error);
+    command_t* cmd = read_command(&error, DEFAULT_CMD_INTERFACE);
     if( cmd != NULL && 
         error == CMD_READ_OK && 
         run_command(cmd, state) == CMD_RUN_OK) 

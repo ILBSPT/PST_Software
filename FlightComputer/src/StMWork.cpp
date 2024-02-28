@@ -122,8 +122,10 @@ void logger(void)
 {
     command_t command_rep;
     command_rep.cmd = CMD_STATUS;
+
     command_rep.size = 2*6 + 1;
     //command_rep.size = 100; //test
+
     command_rep.data[0] = state;
     command_rep.data[1] = (imu_ax >> 8) & 0xff;
     command_rep.data[2] = (imu_ax) & 0xff ;
@@ -139,7 +141,7 @@ void logger(void)
     command_rep.data[12] = (imu_gz) & 0xff;
     command_rep.crc = 0x5151;
 
-    write_command(&command_rep);
+    write_command(&command_rep, DEFAULT_LOG_INFERFACE);
 }
 
 void pressure_safety(void)

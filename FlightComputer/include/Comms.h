@@ -2,6 +2,9 @@
 #define _COMMS_H_
 
 #include <inttypes.h>
+#include <time.h>
+
+#include "HardwareCfg.h"
 
 #define MAX_COMMAND_BUFFER 100
 #define RS485_TIMEOUT_TIME_MS 5000
@@ -30,6 +33,7 @@
 #define ARN_TRIGGER_1 1
 #define ARN_TRIGGER_2 2
 #define ARN_TRIGGER_3 3
+
 
 /*
     Commands
@@ -71,18 +75,22 @@ typedef enum
 
 //----------------------------------------
 
-typedef struct __attribute__((__packed__))
+//typedef struct __attribute__((__packed__))
+typedef struct 
 {
     cmd_type_t cmd;
     //int id;
     uint8_t size;
     uint8_t data[MAX_COMMAND_BUFFER];
     uint16_t crc;
+
+    uint8_t data_recv; //helper pointer to fill data[]
+    clock_t begin;
 } command_t;
 
 typedef enum 
 {
-    SYNC,
+    SYNC = 0,
     CMD,
     SIZE,
     DATA,
@@ -92,7 +100,7 @@ typedef enum
 } COMMAND_STATE;
 
 
-void write_command(command_t* cmd);
-command_t* read_command(int* error);
+void write_command(command_t* cmd, interface_t interface);
+command_t* read_command(int* error, interface_t interface);
 
 #endif
