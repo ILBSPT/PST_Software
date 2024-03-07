@@ -3,9 +3,9 @@ import time
 import serial
 
 #mac
-#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
 #windows
-ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
+#ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
 
 log_delay = 0.01
 message_timeout = 0.3
@@ -21,8 +21,8 @@ command_map = {
     "LED_ON" : 4,
     "LED_OFF" : 5,
     "IMU_CALIB" : 6, 
-    "STATUS_ACK" : 8,
-    "ARM_ACK" : 10
+    "STATUS_ACK" : 10,
+    "ARM_ACK" : 12
 }
 
 state_map = {

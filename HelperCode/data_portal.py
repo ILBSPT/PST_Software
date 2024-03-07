@@ -3,7 +3,7 @@ import time
 import serial
 
 #mac
-#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+ser = serial.Serial('/dev/cu.usbserial-4', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
 
@@ -22,8 +22,8 @@ command_map = {
     "LED_ON" : 4,
     "LED_OFF" : 5,
     "IMU_CALIB" : 6, 
-    "STATUS_ACK" : 8,
-    "ARM_ACK" : 10
+    "STATUS_ACK" : 10,
+    "ARM_ACK" : 12
 }
 
 state_map = {
@@ -175,7 +175,7 @@ def read_cmd():
         print("ACK recieved:", len(buff))
         print("command time", msec)
         log_speed = 1 / ( end - last_log )
-        if(buff[1] == command_map['STATUS_ACK']):
+        if(len(buff) > 1 and buff[1] == command_map['STATUS_ACK']):
             print_status()
         last_log = end
         print("Cmd_ACK: [",''.join('{:02x} '.format(x) for x in buff)[:-1], "]")
@@ -198,7 +198,7 @@ while True:
     #while ser.in_waiting > 0:
         #print(ser.read(1).decode('utf-8'), end='')
 
-    #read_cmd()
-    time.sleep(log_delay * 0.1)
+    read_cmd()
+    time.sleep(0.01)
 
 window.close()

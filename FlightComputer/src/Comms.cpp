@@ -44,7 +44,7 @@ static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_
 {
     uint8_t state = cmd_state;
 
-    printf("data %x\n", read_byte);
+    //printf("data %x\n", read_byte);
     switch(state)
     {
         case SYNC:
@@ -53,7 +53,7 @@ static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_
                 //start timeout timer
                 state = CMD;
                 command->data_recv = 0;
-                memset(&command, 0, sizeof(command_t));
+                memset(command, 0, sizeof(command_t));
                 command->begin = clock();
             }
         break;
@@ -96,7 +96,7 @@ static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_
 command_t* read_command(int* error, interface_t interface)
 {
     static command_t command_arr[interface_t_size];
-    static COMMAND_STATE state_arr[interface_t_size];
+    static COMMAND_STATE state_arr[interface_t_size] = {SYNC};
     static clock_t end_arr[interface_t_size] = {0};
     
     uint8_t index = (uint8_t)interface;
