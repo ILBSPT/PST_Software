@@ -69,7 +69,7 @@ void echo_reply(command_t* cmd)
 #endif
 }
 
-int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
+int run_command(command_t* cmd, rocket_state_t state)
 {
     command_t command_rep;
     rocket_state_t return_state = state;
@@ -88,7 +88,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.size = 0;
             command_rep.crc = 0x3131;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -107,7 +107,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -120,8 +120,8 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
              * Send response
              */
             command_rep.cmd = CMD_STATUS_ACK;
-            //command_rep.size = 2*6 + 1;
-            command_rep.size = 100; //test
+            command_rep.size = 2*6 + 1;
+            //command_rep.size = 100; //test
             command_rep.data[0] = state;
             command_rep.data[1] = (imu_ax >> 8) & 0xff;
             command_rep.data[2] = (imu_ax) & 0xff ;
@@ -137,7 +137,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -158,12 +158,12 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.data[0] = ARN_TRIGGER_1;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             //stage 2
             int error = 0;
             command_t* arm_cmd;
-            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_2)
             {
@@ -172,10 +172,10 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             }
 
             command_rep.data[0] = ARN_TRIGGER_2;
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             //stage 3
-            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_3)
             {
@@ -184,7 +184,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             }
 
             command_rep.data[0] = ARN_TRIGGER_3;
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -193,7 +193,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
         case CMD_ADD_WORK:
         case CMD_REMOVE_WORK:
         {
-            static int8_t working_index[work_enum_size] = {-1}; //Still not sure if this works 
+            static uint8_t working_index[work_enum_size] = {-1}; 
             static void(*work[work_enum_size])(void) = {logger, pressure_safety};
             
             if(cmd->size < 3) return CMD_RUN_OUT_OF_BOUND;
@@ -235,7 +235,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -247,7 +247,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, interface);
+            write_command(&command_rep);
 
             return CMD_RUN_OK;
         }
@@ -261,8 +261,6 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
                 return CMD_RUN_OUT_OF_BOUND;
         break;
     };
-
-    return CMD_RUN_OUT_OF_BOUND;
 
     
     //Serial.printf("cmd: %x state: %d return state %d table: %d\n", cmd->cmd, state, return_state,
@@ -282,11 +280,7 @@ void gyroSetup(void)
 void LoRa_Setup(void)
 {
   LoRa.setPins(5,4,36);
-  //LoRa.setSignalBandwidth(500E3);
-  //LoRa.setCodingRate4(5);
-  //LoRa.setSpreadingFactor(7);
-  //LoRa.setGain(1);
-
+  LoRa.setSignalBandwidth(300E3);
   Serial.println("Lora starting");
   if (!LoRa.begin(868E6)) {
     Serial.println("Starting LoRa failed!");
@@ -330,6 +324,7 @@ void setup() {
 }
 
 void loop() {
+    static rocket_state_t state = IDLE; 
     rocket_state_t work_state    = state, \
                    command_state = state, \
                    event_state   = state; 
@@ -351,10 +346,10 @@ void loop() {
     int error;
 
     //check if we have new data
-    command_t* cmd = read_command(&error, DEFAULT_CMD_INTERFACE);
+    command_t* cmd = read_command(&error);
     if( cmd != NULL && 
         error == CMD_READ_OK && 
-        run_command(cmd, state, DEFAULT_CMD_INTERFACE) == CMD_RUN_OK) 
+        run_command(cmd, state) == CMD_RUN_OK) 
     {
         //make transition to new state on the state machine
         if(state_machine[state].comms[cmd->cmd] != -1)

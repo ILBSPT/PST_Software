@@ -3,8 +3,8 @@
 
 #include "Comms.h"
 
-#define WORK_HANDLER() exec()
-#define EVENT_HANDLER() event_handler()
+#define WORK_HANDLER() exec(state_machine, state)
+#define EVENT_HANDLER() event_handler(state_machine, state)
 
 #define MAX_WORK_SIZE 10
 #define MAX_EVENT_SIZE 10
@@ -15,17 +15,12 @@ typedef int8_t rocket_state_t;
 enum 
 {
     IDLE,
-    
     FUELING,
     PROG1,
     PROG2,
-    SAFETY,
-
-    READY,
-    ARMED,
-    LAUNCH,
+    PROG3,
+    STOP,
     ABORT,
-    IMU_TUNE,
 
     rocket_state_size, //this needs to be the last state for size to work
 };
@@ -51,12 +46,11 @@ typedef struct
     rocket_state_t *comms;
 } State_t;
 
-extern rocket_state_t state; 
 extern rocket_state_t comm_transition[rocket_state_size][cmd_size]; //save transition state for communication
 extern State_t state_machine[rocket_state_size]; 
 
 
-rocket_state_t event_handler();
-bool exec();
+rocket_state_t event_handler(State_t * states, rocket_state_t state);
+bool exec(State_t * states, rocket_state_t state);
 
 #endif
