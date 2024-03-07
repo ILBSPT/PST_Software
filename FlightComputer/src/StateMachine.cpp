@@ -41,7 +41,7 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
                   {.chanel = toggle_led, .delay = 500, .begin = 0},
-                  {.chanel = logger, .delay = 100, .begin = 0} },
+                  {.chanel = logger, .delay = 20, .begin = 0} },
 
         .events = {},
 

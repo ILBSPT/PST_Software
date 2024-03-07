@@ -69,7 +69,7 @@ void echo_reply(command_t* cmd)
 #endif
 }
 
-int run_command(command_t* cmd, rocket_state_t state)
+int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 {
     command_t command_rep;
     rocket_state_t return_state = state;
@@ -88,7 +88,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x3131;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -107,7 +107,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -137,7 +137,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -158,7 +158,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[0] = ARN_TRIGGER_1;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             //stage 2
             int error = 0;
@@ -172,7 +172,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_2;
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             //stage 3
             while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
@@ -184,7 +184,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_3;
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -235,7 +235,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -247,7 +247,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep, DEFAULT_CMD_INTERFACE);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -351,7 +351,7 @@ void loop() {
     command_t* cmd = read_command(&error, DEFAULT_CMD_INTERFACE);
     if( cmd != NULL && 
         error == CMD_READ_OK && 
-        run_command(cmd, state) == CMD_RUN_OK) 
+        run_command(cmd, state, DEFAULT_CMD_INTERFACE) == CMD_RUN_OK) 
     {
         //make transition to new state on the state machine
         if(state_machine[state].comms[cmd->cmd] != -1)

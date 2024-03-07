@@ -121,7 +121,7 @@ void read_IMU(void)
 void logger(void)
 {
     command_t command_rep;
-    command_rep.cmd = CMD_STATUS;
+    command_rep.cmd = CMD_STATUS_ACK;
 
     command_rep.size = 2*6 + 1;
     //command_rep.size = 100; //test
