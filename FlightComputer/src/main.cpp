@@ -253,6 +253,31 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
         }
         break;
 
+        case CMD_EXEC_PROG:
+        {
+            if(cmd->size == 0)
+            {
+                return CMD_RUN_OUT_OF_BOUND;
+            }
+
+            //ensure that the rocket is in fueling mode before running a fueling program
+            if(state == FUELING)
+            {
+                rocket_state_t next_state = -1;
+                switch(cmd->data[0])
+                {
+                    case 1:
+                        next_state = PROG1;
+                    break;
+                    case 2:
+                        next_state = PROG2;
+                    break;
+                }
+
+                comm_transition[FUELING][CMD_EXEC_PROG] = next_state;
+            }
+        }
+
         default:
             // if the command has no action it still needs to return ok to change state
             if(cmd->cmd < cmd_size)
@@ -379,5 +404,5 @@ void loop() {
         state = work_state;
 
 
-    delay(1);
+    //delay(1);
 }

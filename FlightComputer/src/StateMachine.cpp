@@ -34,7 +34,7 @@ State_t state_machine[rocket_state_size] =
 {
     //IDLE
     {
-        .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
+        .work = { {.chanel = read_IMU, .delay = 1000, .begin = 0},
                   {.chanel = toggle_led, .delay = 1000, .begin = 0} },
 
         .events = {},
@@ -44,7 +44,7 @@ State_t state_machine[rocket_state_size] =
     //FUELING
     {
         .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = toggle_led, .delay = 1000, .begin = 0} },
+                  {.chanel = toggle_led, .delay = 200, .begin = 0} },
 
         .events = {},
 
@@ -53,7 +53,7 @@ State_t state_machine[rocket_state_size] =
     //PROG1
     {
         .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = toggle_led, .delay = 1000, .begin = 0} },
+                  {.chanel = blink_led, .delay = 200, .begin = 0} },
 
         .events = {},
 
