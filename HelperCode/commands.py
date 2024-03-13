@@ -12,14 +12,44 @@ missed_packets = 0
 
 command_map = {
     "STATUS" : 0,
-    "READY" : 1,
-    "ARM" : 2,
-    "ABORT" : 3,
-    "LED_ON" : 4,
-    "LED_OFF" : 5,
-    "IMU_CALIB" : 6, 
-    "STATUS_ACK" : 10,
-    "ARM_ACK" : 12
+    "ABORT" : 1,
+    "EXEC_PROG" : 2, 
+    "STOP_PROG" : 3,
+    "FUELING" : 4,
+
+#FLIGHT computer commands
+    "READY" : 5,
+    "ARM" : 6,
+
+    "LED_ON" : 7,
+    "LED_OFF" : 8,
+
+    "IMU_CALIB" : 9,
+
+#FILLING station commands
+    "RESUME_PROG" : 10,
+
+#State machine commands
+    "ADD_WORK" : 11,
+    "REMOVE_WORK" : 12,
+
+#used to get the number of commands 
+    "cmd_size" : 13,
+
+#ACKs
+    "STATUS_ACK" : 14,
+    "FUELING_ACK" : 15,
+    "READY_ACK" : 16,
+    "ARM_ACK" : 17,
+    "ABORT_ACK" : 18, 
+    "LED_ON_ACK" : 19,
+    "LED_OFF_ACK" : 20,
+    "IMU_CALIB_ACK" : 21,
+    "EXEC_PROG_ACK" : 22,
+    "STOP_PROG_ACK" : 23,
+    "RESUME_PROG_ACK" : 24,
+    "ADD_WORK_ACK" : 25,
+    "REMOVE_WORK_ACK" : 26 
 }
 
 sync_state = 1
