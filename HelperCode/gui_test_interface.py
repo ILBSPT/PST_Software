@@ -4,12 +4,12 @@ import serial
 
 #mac
 ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
-#ser = serial.Serial('/dev/cu.usbmodem1301', 115200, timeout=0.015) #set read timeout of 1s
+#ser = serial.Serial('/dev/cu.usbserial-3', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
 
-#log_delay = 0.01
-log_delay = 1
+log_delay = 0.01
+#log_delay = 1
 message_timeout = 0.5
 
 missed_packets = 0
@@ -59,20 +59,28 @@ command_map = {
 
 state_map = {
     "IDLE" : 0,
-    "READY" : 1,
-    "ARMED" : 2,
-    "LAUNCH": 3,
-    "ABORT": 4,
-    "IMU_CALIB": 5
+    "FUELING" : 1,
+    "PROG1" : 2,
+    "PROG2" : 3,
+    "SAFETY" : 4,
+    "READY" : 5,
+    "ARMED" : 6,
+    "LAUNCH": 7,
+    "ABORT": 8,
+    "IMU_CALIB": 9
 }
 
 state_map_to_string = {
-    0: "IDLE",
-    1: "READY",
-    2: "ARMED",
-    3: "LAUNCH",
-    4: "ABORT",
-    5: "IMU_CALIB"
+    0 : "IDLE",
+    1 : "FUELING",
+    2 : "PROG1",
+    3 : "PROG2",
+    4 : "SAFETY",
+    5 : "READY",
+    6 : "ARMED",
+    7 : "LAUNCH",
+    8 : "ABORT",
+    9 : "IMU_CALIB"
 }
 
 sync_state = 1
@@ -93,10 +101,14 @@ buff = bytearray()
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
 layout = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_IMU_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
+          [sg.Button('Start Fueling', key = '_FUELING_', size = (10, 5)),
+           sg.Button('Stop', key = '_STOP_', size = (10, 5)),
+           sg.Button('Exec prog', key = '_EXEC_', size = (10, 5)),
+           sg.Combo(values = (1,2,3), default_value = 1, key = '_PROG_', size = (10,5), font=('Arial Bold', 16))],
           [sg.Button('Ready', key = '_READY_', size = (10,5)),
            sg.Button('Arm', key = '_ARM_', size = (10,5)), 
            sg.Button('Abort', key = '_ABORT_', size = (10,5)), 
-           sg.Button('Log', key = "_LOG_", size = (10,5)),
+           sg.Button('Status', key = "_STATUS_", size = (10,5)),
            sg.Button('IMU_calib', key = "_IMU_calib_", size = (10,5)),
            sg.Button('Toggle log', key = '_LOG_TOGGLE_', size = (10,5)), sg.Exit()]]      
 
@@ -148,7 +160,7 @@ def print_status():
 
     state = int.from_bytes(buff[3:4], byteorder='big', signed=True)
     if state < 0 or state >= len(state_map_to_string): 
-        print("bad state decoding")
+        print("bad state decoding", state)
         return
 
     ax = int.from_bytes(buff[4:6], byteorder='big', signed=True)
@@ -304,7 +316,7 @@ while True:
             #rep = ser.read(5)
             #print(rep.decode('utf-8'))
             #print(bytearray(rep).hex())
-        elif event == '_LOG_':
+        elif event == '_STATUS_':
             cmd_launched = 1
             cmd = bytearray([0x55, command_map['STATUS'], 0, 0x20, 0x21])
             ser.write(cmd)
@@ -317,6 +329,22 @@ while True:
             cmd_launched = 1
             cmd = bytearray([0x55, command_map['IMU_CALIB'], 0, 0x20, 0x21])
             print("Cmd: [",''.join('{:02x} '.format(x) for x in cmd)[:-1], "]")
+            ser.write(cmd)
+            read_cmd()
+        elif event == '_FUELING_':
+            cmd_launched = 1
+            cmd = bytearray([0x55, command_map['FUELING'], 0, 0x20, 0x21])
+            ser.write(cmd)
+            read_cmd()
+        elif event == '_STOP_':
+            cmd_launched = 1
+            cmd = bytearray([0x55, command_map['STOP'], 0, 0x20, 0x21])
+            ser.write(cmd)
+            read_cmd()
+        elif event == '_EXEC_':
+            cmd_launched = 1
+            prog = window['_PROG_'].get()
+            cmd = bytearray([0x55, command_map['EXEC_PROG'], 1, prog, 0x20, 0x21])
             ser.write(cmd)
             read_cmd()
 
@@ -334,6 +362,6 @@ while True:
         #print(ser.read(1).decode('utf-8'), end='')
 
 
-    time.sleep(0.005)
+    time.sleep(0.001)
 
 window.close()

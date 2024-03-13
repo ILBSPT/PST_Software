@@ -10,8 +10,8 @@ void setup() {
   Serial.println("LoRa Sender");
 
   LoRa.setPins(10, 9, 2);
-  //LoRa.setSignalBandwidth(500E3);
-  //LoRa.setCodingRate4(5);
+  LoRa.setSignalBandwidth(500E3);
+  LoRa.setCodingRate4(5);
   //LoRa.setSpreadingFactor(7);
   //LoRa.setGain(1);
 
