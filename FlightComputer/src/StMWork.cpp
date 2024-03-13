@@ -32,54 +32,20 @@ void toggle_led(void)
     digitalWrite(LED_PIN, led_status);
 }
 
-void toggle_led_1000ms(void)
+void blink_led(void)
 {
-    static clock_t begin = 0, end = 0;
-    static int led_status = 0;
-    end = millis();
-    
-    int msec = (end - begin);
-    if(msec > 1000)
-    {
-        begin = clock();
-        //togle led
-        led_status ^= 1;
-        digitalWrite(LED_PIN, led_status);
-    }
-}
+    static int stage = 0;
+    if(stage == 0)
+        digitalWrite(LED_PIN, 1);
+    else if(stage == 1)
+        digitalWrite(LED_PIN, 0);
+    else if(stage == 2 || stage == 3)
+        digitalWrite(LED_PIN, 1);
+    else if(stage == 4)
+        digitalWrite(LED_PIN, 0);
 
-void toggle_led_500ms(void)
-{
-    static clock_t begin = 0, end = 0;
-    static int led_status = 0;
-    end = millis();
-    
-    int msec = (end - begin);
-    if(msec > 500)
-    {
-        begin = clock();
-        //togle led
-        led_status ^= 1;
-        digitalWrite(LED_PIN, led_status);
-    }
+    stage = (stage + 1) % 5;   
 }
-
-void toggle_led_200ms(void)
-{
-    static clock_t begin = 0, end = 0;
-    static int led_status = 0;
-    end = millis();
-    
-    int msec = (end - begin);
-    if(msec > 200)
-    {
-        begin = clock();
-        //togle led
-        led_status ^= 1;
-        digitalWrite(LED_PIN, led_status);
-    }
-}
-
 
 void imu_pid_calibration(void)
 {
