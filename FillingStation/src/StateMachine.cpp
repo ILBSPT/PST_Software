@@ -34,7 +34,7 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  //{.chanel = echo_reply, .delay = 10} 
+                  {.chanel = echo_reply, .delay = 10} 
                 },
 
         .events = {},
