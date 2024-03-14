@@ -69,7 +69,7 @@ void echo_reply(command_t* cmd)
 #endif
 }
 
-int run_command(command_t* cmd, rocket_state_t state)
+int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 {
     command_t command_rep;
     rocket_state_t return_state = state;
@@ -88,7 +88,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x3131;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -107,7 +107,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -120,8 +120,8 @@ int run_command(command_t* cmd, rocket_state_t state)
              * Send response
              */
             command_rep.cmd = CMD_STATUS_ACK;
-            command_rep.size = 2*6 + 1;
-            //command_rep.size = 100; //test
+            //command_rep.size = 2*6 + 1;
+            command_rep.size = 100; //test
             command_rep.data[0] = state;
             command_rep.data[1] = (imu_ax >> 8) & 0xff;
             command_rep.data[2] = (imu_ax) & 0xff ;
@@ -137,7 +137,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -158,12 +158,12 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.data[0] = ARN_TRIGGER_1;
             command_rep.crc = 0x5151;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             //stage 2
             int error = 0;
             command_t* arm_cmd;
-            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_2)
             {
@@ -172,10 +172,10 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_2;
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             //stage 3
-            while((arm_cmd = read_command(&error)) == NULL && error == CMD_READ_NO_CMD) {}
+            while((arm_cmd = read_command(&error, DEFAULT_CMD_INTERFACE)) == NULL && error == CMD_READ_NO_CMD) {}
 
             if(error != OK || arm_cmd->cmd != CMD_ARM || arm_cmd->data[0] != ARN_TRIGGER_3)
             {
@@ -184,50 +184,50 @@ int run_command(command_t* cmd, rocket_state_t state)
             }
 
             command_rep.data[0] = ARN_TRIGGER_3;
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
         break;
 
-        case CMD_ADD_WORK:
-        case CMD_REMOVE_WORK:
-        {
-            static uint8_t working_index[work_enum_size] = {-1}; 
-            static void(*work[work_enum_size])(void) = {logger, pressure_safety};
+        //case CMD_ADD_WORK:
+        //case CMD_REMOVE_WORK:
+        //{
+            //static int8_t working_index[work_enum_size] = {-1}; //Still not sure if this works 
+            //static void(*work[work_enum_size])(void) = {logger, pressure_safety};
             
-            if(cmd->size < 3) return CMD_RUN_OUT_OF_BOUND;
-            uint8_t work_id = cmd->data[0];
-            uint16_t work_delay = (cmd->data[1] << 8) & cmd->data[2];
+            //if(cmd->size < 3) return CMD_RUN_OUT_OF_BOUND;
+            //uint8_t work_id = cmd->data[0];
+            //uint16_t work_delay = (cmd->data[1] << 8) & cmd->data[2];
 
-            if(cmd->cmd == CMD_ADD_WORK &&
-                working_index[work_id] == -1)
-            {
-                int i;
-                for(i = 0; i < MAX_WORK_SIZE; i++)
-                    // find work empty slot
-                    if(state_machine[state].work[i].chanel == NULL) break;
+            //if(cmd->cmd == CMD_ADD_WORK &&
+                //working_index[work_id] == -1)
+            //{
+                //int i;
+                //for(i = 0; i < MAX_WORK_SIZE; i++)
+                    //// find work empty slot
+                    //if(state_machine[state].work[i].chanel == NULL) break;
 
-                if(i == MAX_WORK_SIZE) return CMD_RUN_OUT_OF_BOUND; 
+                //if(i == MAX_WORK_SIZE) return CMD_RUN_OUT_OF_BOUND; 
 
-                state_machine[state].work[i].chanel = work[work_id]; 
-                state_machine[state].work[i].delay = work_delay;
-                state_machine[state].work[i].begin = 0;
-                working_index[work_id] = i;
+                //state_machine[state].work[i].chanel = work[work_id]; 
+                //state_machine[state].work[i].delay = work_delay;
+                //state_machine[state].work[i].begin = 0;
+                //working_index[work_id] = i;
 
-            }
-            else if(cmd-> cmd == CMD_REMOVE_WORK &&
-                    working_index[work_id] != -1)
-            {
-                uint8_t index = working_index[work_id];
+            //}
+            //else if(cmd-> cmd == CMD_REMOVE_WORK &&
+                    //working_index[work_id] != -1)
+            //{
+                //uint8_t index = working_index[work_id];
 
-                state_machine[state].work[index].chanel = NULL;
-                state_machine[state].work[index].delay = 0;
-                state_machine[state].work[index].begin = 0;
-                working_index[work_id] = -1;
-            }
-        }
-        break;
+                //state_machine[state].work[index].chanel = NULL;
+                //state_machine[state].work[index].delay = 0;
+                //state_machine[state].work[index].begin = 0;
+                //working_index[work_id] = -1;
+            //}
+        //}
+        //break;
 
         case CMD_READY:
         {
@@ -235,7 +235,7 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
@@ -247,11 +247,39 @@ int run_command(command_t* cmd, rocket_state_t state)
             command_rep.size = 0;
             command_rep.crc = 0x2121;
 
-            write_command(&command_rep);
+            write_command(&command_rep, interface);
 
             return CMD_RUN_OK;
         }
         break;
+
+        case CMD_EXEC_PROG:
+        {
+            if(cmd->size == 0)
+            {
+                return CMD_RUN_OUT_OF_BOUND;
+            }
+
+            //ensure that the rocket is in fueling mode before running a fueling program
+            if(state == FUELING)
+            {
+                rocket_state_t next_state = -1;
+                switch(cmd->data[0])
+                {
+                    case 1:
+                        next_state = PROG1;
+                    break;
+                    case 2:
+                        next_state = PROG2;
+                    break;
+                    case 3:
+                        next_state = PROG3;
+                    break;
+                }
+
+                comm_transition[FUELING][CMD_EXEC_PROG] = next_state;
+            }
+        }
 
         default:
             // if the command has no action it still needs to return ok to change state
@@ -261,6 +289,8 @@ int run_command(command_t* cmd, rocket_state_t state)
                 return CMD_RUN_OUT_OF_BOUND;
         break;
     };
+
+    return CMD_RUN_OUT_OF_BOUND;
 
     
     //Serial.printf("cmd: %x state: %d return state %d table: %d\n", cmd->cmd, state, return_state,
@@ -346,10 +376,10 @@ void loop() {
     int error;
 
     //check if we have new data
-    command_t* cmd = read_command(&error);
+    command_t* cmd = read_command(&error, DEFAULT_CMD_INTERFACE);
     if( cmd != NULL && 
         error == CMD_READ_OK && 
-        run_command(cmd, state) == CMD_RUN_OK) 
+        run_command(cmd, state, DEFAULT_CMD_INTERFACE) == CMD_RUN_OK) 
     {
         //make transition to new state on the state machine
         if(state_machine[state].comms[cmd->cmd] != -1)

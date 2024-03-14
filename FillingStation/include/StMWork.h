@@ -23,5 +23,6 @@ void V2_open(void);
 void V3_open(void);
 
 void logger(void);
-void pressure_safety(void);
+
+void echo_reply(void);
 #endif

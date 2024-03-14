@@ -9,7 +9,7 @@
 
 #include <LoRa.h>
 
-void write_command(command_t* cmd)
+void write_command(command_t* cmd, interface_t interface)
 {
     int size = 0;
     uint8_t buff[MAX_COMMAND_BUFFER + 5] = {0};
@@ -22,116 +22,152 @@ void write_command(command_t* cmd)
     buff[size++] = ((cmd->crc >> 8) & 0xff);
     buff[size++] = ((cmd->crc) & 0xff);
 
-#if defined(DIGITAL_TARGET)
-    Serial.write(buff, size);
-#elif defined(LoRa_TARGET)
-    LoRa.beginPacket();
-    LoRa.write(buff, size);
-    LoRa.endPacket(true);
-#elif defined(RS485_TARGET)
-    Serial2.write(buff, size);
-#endif
+    switch(interface)
+    {
+        case LoRa_INTERFACE:
+            LoRa.beginPacket();
+            LoRa.write(buff, size);
+            LoRa.endPacket(true);
+        break;
+        case RS485_INTERFACE:
+            Serial2.write(buff, size);
+        break;
+        case Uart_INTERFACE:
+            Serial.write(buff, size);
+        break;
+        default:
+        break;
+    }
 }
 
-command_t* read_command(int* error)
+static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_STATE cmd_state)
 {
-    static COMMAND_STATE state = SYNC;
-    static command_t command;
-    static uint8_t data_recv;
-    static clock_t begin = 0, end = 0;
+    uint8_t state = cmd_state;
+
+    //printf("data %x\n", read_byte);
+    switch(state)
+    {
+        case SYNC:
+            if(read_byte == 0x55)
+            {
+                //start timeout timer
+                state = CMD;
+                command->data_recv = 0;
+                memset(command, 0, sizeof(command_t));
+                command->begin = clock();
+            }
+        break;
+
+        case CMD:
+            command->cmd = (cmd_type_t)read_byte;
+            state = SIZE;
+        break;
+
+        case SIZE:                
+            command->size = read_byte;
+            if(command->size == 0)
+                state = CRC1;
+            else state = DATA;
+        break;
+
+        case DATA:
+            command->data[command->data_recv++] = read_byte;
+            if(command->data_recv == command->size)
+                state = CRC1;
+        break;
+
+        case CRC1:
+            command->crc = read_byte << 8;
+            state = CRC2;
+        break;
+
+        case CRC2:
+            command->crc += read_byte;
+            state = END;
+        break;
+
+        default:
+            state = SYNC;
+    };
+
+    return (COMMAND_STATE)state;
+}
+
+command_t* read_command(int* error, interface_t interface)
+{
+    static command_t command_arr[interface_t_size];
+    static COMMAND_STATE state_arr[interface_t_size] = {SYNC};
+    static clock_t end_arr[interface_t_size] = {0};
     
+    uint8_t index = (uint8_t)interface;
+    command_t *command = &command_arr[index];
+    COMMAND_STATE *state = &state_arr[index];
+    clock_t *end = &end_arr[index];
+
     size_t size;
     uint8_t read_byte;
 
-#if defined(DIGITAL_TARGET)
-    /*
-        Used for testing. See Target.h
-    */
-    while(Serial.available())
+    switch(interface)
     {
-        read_byte = Serial.read();
-#elif defined(LoRa_TARGET)
-    int packetSize = LoRa.parsePacket();
-    while(packetSize-- > 0 && LoRa.available())
-    {
-        read_byte = LoRa.read();
-
-#elif defined(RS485_TARGET)
-    while(Serial2.available())
-    {
-        read_byte = Serial2.read();
-#endif
-        printf("data %x\n", read_byte);
-        switch(state)
+        case LoRa_INTERFACE:
         {
-            case SYNC:
-                if(read_byte == 0x55)
-                {
-                    //start timeout timer
-                    state = CMD;
-                    data_recv = 0;
-                    memset(&command, 0, sizeof(command_t));
-                    begin = clock();
-                }
-            break;
+            int packetSize = LoRa.parsePacket();
+            while(packetSize-- > 0 && LoRa.available())
+            {
+                read_byte = LoRa.read();
+                *state = parse_input(read_byte, command, *state);
+            }
+        }
+        break;
 
-            case CMD:
-                command.cmd = (cmd_type_t)read_byte;
-                state = SIZE;
-            break;
+        case RS485_INTERFACE:
+        {
+            while(Serial2.available())
+            {
+                read_byte = Serial2.read();
+                *state = parse_input(read_byte, command, *state);
+            }
+        }
+        break;
+        
+        case Uart_INTERFACE:
+        {
+            while(Serial.available())
+            {
+                read_byte = Serial.read();
+                *state = parse_input(read_byte, command, *state);
+            }
+        }
+        break;
 
-            case SIZE:                
-                command.size = read_byte;
-                if(command.size == 0)
-                    state = CRC1;
-                else state = DATA;
-            break;
+        default:
+        break;
+    };
 
-            case DATA:
-                command.data[data_recv++] = read_byte;
-                if(data_recv == command.size)
-                    state = CRC1;
-            break;
-
-            case CRC1:
-                command.crc = read_byte << 8;
-                state = CRC2;
-            break;
-
-            case CRC2:
-                command.crc += read_byte;
-                state = END;
-            break;
-
-            default:
-                state = SYNC;
-        };
-    }
-
-    end = clock();
-    int msec = (end - begin) * 1000 / CLOCKS_PER_SEC;
+    *end = clock();
+    int msec = (*end - command->begin) * 1000 / CLOCKS_PER_SEC;
 
     //if timeout reset state
-    if(state != SYNC && msec > RS485_TIMEOUT_TIME_MS) //timeout
+    if(*state != SYNC && msec > RS485_TIMEOUT_TIME_MS) //timeout
     {
         Serial.printf("reset\n"); //debug
-        state = SYNC;
+        *state = SYNC;
         
         *error = CMD_READ_TIMEOUT;
 
         return NULL;
     }
     //if bad cr reset state
-    else if(state == END /* && check_crc(&command) */)
+    else if(*state == END /* && check_crc(&command) */)
     {
-        state = SYNC;
+        *state = SYNC;
 
         *error = CMD_READ_OK;
-        return &command;
+        return command;
     }
-    else if(state == END)
+    else if(*state == END)
     {
-        state = SYNC;
+        *state = SYNC;
 
         *error = CMD_READ_BAD_CRC;
         return NULL;
