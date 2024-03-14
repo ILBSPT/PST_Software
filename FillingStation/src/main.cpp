@@ -355,8 +355,7 @@ void setup() {
 
 void loop() {
     static rocket_state_t state = IDLE; 
-    rocket_state_t work_state    = state, \
-                   command_state = state, \
+    rocket_state_t command_state = state, \
                    event_state   = state; 
 
     /*
@@ -398,10 +397,6 @@ void loop() {
         //only if comms haven't changed the state we can
         //acept a new state from internal events
         state = event_state;
-    else if(work_state != state)
-        //this is the lowest priority for state change
-        //this can be used as a mechanisn to execute a work function only one time
-        state = work_state;
 
 
     delay(1);
