@@ -194,7 +194,7 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
         case CMD_REMOVE_WORK:
         {
             static int8_t working_index[work_enum_size] = {-1}; //Still not sure if this works 
-            static void(*work[work_enum_size])(void) = {logger, pressure_safety};
+            static void(*work[work_enum_size])(void) = {logger};
             
             if(cmd->size < 3) return CMD_RUN_OUT_OF_BOUND;
             uint8_t work_id = cmd->data[0];

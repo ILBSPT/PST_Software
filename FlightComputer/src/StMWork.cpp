@@ -109,8 +109,3 @@ void logger(void)
 
     write_command(&command_rep, DEFAULT_LOG_INFERFACE);
 }
-
-void pressure_safety(void)
-{
-
-}
