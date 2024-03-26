@@ -34,7 +34,8 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  {.chanel = echo_reply, .delay = 10} 
+                  //{.chanel = echo_reply, .delay = 10} 
+                  {.chanel = toggle_led, .delay = 1000}
                 },
 
         .events = {},
@@ -57,7 +58,8 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  {.chanel = V1_open, .delay = 500} },
+                  {.chanel = V1_open, .delay = 500},
+                  {.chanel = toggle_led, .delay = 100} },
 
         .events = { {.condition = prog1_finish_cond, .reaction = V1_close, .next_state = FUELING} },
 

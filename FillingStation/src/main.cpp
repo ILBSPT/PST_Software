@@ -120,21 +120,26 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
              * Send response
              */
             command_rep.cmd = CMD_STATUS_ACK;
-            //command_rep.size = 2*6 + 1;
             command_rep.size = 100; //test
             command_rep.data[0] = state;
-            command_rep.data[1] = (imu_ax >> 8) & 0xff;
-            command_rep.data[2] = (imu_ax) & 0xff ;
-            command_rep.data[3] = (imu_ay >> 8) & 0xff;
-            command_rep.data[4] = (imu_ay) & 0xff;
-            command_rep.data[5] = (imu_az >> 8) & 0xff;
-            command_rep.data[6] = (imu_az) & 0xff;
-            command_rep.data[7] = (imu_gx >> 8) & 0xff;
-            command_rep.data[8] = (imu_gx) & 0xff;
-            command_rep.data[9] = (imu_gy >> 8) & 0xff;
-            command_rep.data[10] = (imu_gy) & 0xff;
-            command_rep.data[11] = (imu_gz >> 8) & 0xff;
-            command_rep.data[12] = (imu_gz) & 0xff;
+
+            command_rep.size = 3; 
+            command_rep.data[1] = (tank_pressure >> 8) & 0xff; 
+            command_rep.data[2] = (tank_pressure) & 0xff; 
+            
+            //command_rep.size = 2*6 + 1;
+            //command_rep.data[1] = (imu_ax >> 8) & 0xff;
+            //command_rep.data[2] = (imu_ax) & 0xff ;
+            //command_rep.data[3] = (imu_ay >> 8) & 0xff;
+            //command_rep.data[4] = (imu_ay) & 0xff;
+            //command_rep.data[5] = (imu_az >> 8) & 0xff;
+            //command_rep.data[6] = (imu_az) & 0xff;
+            //command_rep.data[7] = (imu_gx >> 8) & 0xff;
+            //command_rep.data[8] = (imu_gx) & 0xff;
+            //command_rep.data[9] = (imu_gy >> 8) & 0xff;
+            //command_rep.data[10] = (imu_gy) & 0xff;
+            //command_rep.data[11] = (imu_gz >> 8) & 0xff;
+            //command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
 
             write_command(&command_rep, interface);
@@ -318,6 +323,15 @@ void LoRa_Setup(void)
   }
 }
 
+void Valves_Setup(void)
+{
+    pinMode(V1_PIN, OUTPUT);
+    pinMode(V2_PIN, OUTPUT);
+    pinMode(V3_PIN, OUTPUT);
+
+    //pinMode(Pressure_PIN, INPUT);
+}
+
 void setup() {
 
     Serial.begin(115200); //USBC serial
@@ -332,8 +346,11 @@ void setup() {
     gyroSetup();
     LoRa_Setup();
 
+    Valves_Setup();
+
     //setup trigger switch
-    pinMode(TRIGGER, INPUT_PULLUP);
+    //pinMode(TRIGGER, INPUT_PULLUP);
+    pinMode(TRIGGER, INPUT);
 
     //Set board LED 
     pinMode(LED_PIN, OUTPUT);
@@ -354,7 +371,7 @@ void setup() {
 }
 
 void loop() {
-    static rocket_state_t state = IDLE; 
+    //static rocket_state_t state = IDLE; 
     rocket_state_t command_state = state, \
                    event_state   = state; 
 
@@ -367,7 +384,7 @@ void loop() {
      Event handling
      */
     if (work_performed) event_state = EVENT_HANDLER();
-    if(event_state == -1) event_state = state;
+    if (event_state == -1) event_state = state;
 
     /*
      Comms

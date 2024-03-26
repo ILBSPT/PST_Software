@@ -23,4 +23,13 @@ extern uint8_t brackets_out_done;
 extern uint8_t brackets_in_done;
 
 
+//---------------Valve state------------
+//extern uint8_t v1;
+//extern uint8_t v3;
+//extern uint8_t v2;
+
+
+//---------------Tank state--------------
+extern uint16_t tank_pressure;
+
 #endif

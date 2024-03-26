@@ -19,6 +19,8 @@ int16_t imu_gx;
 int16_t imu_gy;
 int16_t imu_gz;
 
+uint16_t tank_pressure = 0;
+
 void idle_state(void) { return; }
 
 void toggle_led_high(void)
@@ -33,9 +35,18 @@ void toggle_led(void)
     digitalWrite(LED_PIN, led_status);
 }
 
+void read_pressures_test(void)
+{
+    tank_pressure = analogRead(Pressure_PIN);
+    //tank_pressure = (uint16_t)map(analogValue, 0, 4096, 0, 255);
+    Serial.print("Pressure ");
+    Serial.println(tank_pressure);
+    return;
+}
 void read_pressures(void)
 {
     //Dummy function
+    read_pressures_test();
     return;
 }
 
@@ -47,32 +58,32 @@ void read_temperatures(void)
 
 void V1_close(void)
 {
-
+    digitalWrite(V1_PIN, 0);
 }
 
 void V2_close(void)
 {
-
+    digitalWrite(V2_PIN, 0);
 }
 
 void V3_close(void)
 {
-
+    digitalWrite(V3_PIN, 0);
 }
 
 void V1_open(void)
 {
-
+    digitalWrite(V1_PIN, 1);
 }
 
 void V2_open(void)
 {
-
+    digitalWrite(V2_PIN, 1);
 }
 
 void V3_open(void)
 {
-
+    digitalWrite(V3_PIN, 1);
 }
 
 void logger(void)
