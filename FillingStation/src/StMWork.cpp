@@ -39,8 +39,8 @@ void read_pressures_test(void)
 {
     tank_pressure = analogRead(Pressure_PIN);
     //tank_pressure = (uint16_t)map(analogValue, 0, 4096, 0, 255);
-    Serial.print("Pressure ");
-    Serial.println(tank_pressure);
+    //Serial.print("Pressure ");
+    //Serial.println(tank_pressure);
     return;
 }
 void read_pressures(void)

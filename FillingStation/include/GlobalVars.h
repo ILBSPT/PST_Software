@@ -32,4 +32,9 @@ extern uint8_t brackets_in_done;
 //---------------Tank state--------------
 extern uint16_t tank_pressure;
 
+
+//---------------Tank vars----------------
+extern uint16_t FP1, FP2, FP3;
+extern uint16_t FL1, FL2;
+
 #endif

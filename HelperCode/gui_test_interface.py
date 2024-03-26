@@ -3,8 +3,8 @@ import time
 import serial
 
 #mac
-#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
-ser = serial.Serial('/dev/cu.usbserial-3', 115200, timeout=0.015) #set read timeout of 1s
+ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+#ser = serial.Serial('/dev/cu.usbserial-3', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
 
@@ -43,21 +43,31 @@ command_map = {
 
 #ACKs
     "STATUS_ACK" : 14,
-    "FUELING_ACK" : 15,
-    "READY_ACK" : 16,
-    "ARM_ACK" : 17,
-    "ABORT_ACK" : 18, 
-    "LED_ON_ACK" : 19,
-    "LED_OFF_ACK" : 20,
-    "IMU_CALIB_ACK" : 21,
-    "EXEC_PROG_ACK" : 22,
-    "STOP_PROG_ACK" : 23,
+    "ABORT_ACK" : 15, 
+    "EXEC_PROG_ACK" : 16,
+    "STOP_PROG_ACK" : 17,
+    "FUELING_ACK" : 18,
+    "READY_ACK" : 19,
+    "ARM_ACK" : 20,
+    "LED_ON_ACK" : 21,
+    "LED_OFF_ACK" : 22,
+    "IMU_CALIB_ACK" : 23,
     "RESUME_PROG_ACK" : 24,
     "ADD_WORK_ACK" : 25,
     "REMOVE_WORK_ACK" : 26 
 }
 
-state_map = {
+state_map_fill = {
+    "IDLE" : 0,
+    "FUELING" : 1,
+    "PROG1" : 2,
+    "PROG2" : 3,
+    "PROG3" : 4,
+    "STOP" : 5,
+    "ABORT": 6,
+}
+
+state_map_rocket = {
     "IDLE" : 0,
     "FUELING" : 1,
     "PROG1" : 2,
@@ -70,7 +80,17 @@ state_map = {
     "IMU_CALIB": 9
 }
 
-state_map_to_string = {
+state_map_to_string_fill = {
+    0 : "IDLE",
+    1 : "FUELING",
+    2 : "PROG1",
+    3 : "PROG2",
+    4 : "PROG3",
+    5 : "SAFETY",
+    6 : "ABORT",
+}
+
+state_map_to_string_rocket = {
     0 : "IDLE",
     1 : "FUELING",
     2 : "PROG1",
@@ -82,6 +102,10 @@ state_map_to_string = {
     8 : "ABORT",
     9 : "IMU_CALIB"
 }
+
+state_map = state_map_fill
+state_map_to_string = state_map_to_string_fill
+
 
 sync_state = 1
 cmd_state = 2
@@ -100,17 +124,32 @@ buff = bytearray()
 
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
-layout = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_IMU_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
+layout_rocket = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_IMU_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
           [sg.Button('Start Fueling', key = '_FUELING_', size = (10, 5)),
            sg.Button('Stop', key = '_STOP_', size = (10, 5)),
            sg.Button('Exec prog', key = '_EXEC_', size = (10, 5)),
-           sg.Combo(values = (1,2,3), default_value = 1, key = '_PROG_', size = (10,5), font=('Arial Bold', 16))],
+           sg.Combo(values = (1,2), default_value = 1, key = '_PROG_', size = (10,5), font=('Arial Bold', 16))],
           [sg.Button('Ready', key = '_READY_', size = (10,5)),
            sg.Button('Arm', key = '_ARM_', size = (10,5)), 
            sg.Button('Abort', key = '_ABORT_', size = (10,5)), 
            sg.Button('Status', key = "_STATUS_", size = (10,5)),
            sg.Button('IMU_calib', key = "_IMU_calib_", size = (10,5)),
            sg.Button('Toggle log', key = '_LOG_TOGGLE_', size = (10,5)), sg.Exit()]]      
+
+layout_fill = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_IMU_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
+          [sg.Button('Exec prog', key = '_EXEC_', size = (10, 5)),
+           sg.Combo(values = (1,2,3), default_value = 1, key = '_PROG_', size = (10,5), font=('Arial Bold', 16)),
+           sg.Button('Change', key = '_CHANGE_', size = (10, 5)), 
+           sg.Combo(values = ('FP1','FP2', 'FP3', 'FL1', 'FL2'), default_value = 'FP1', key = '_VAR_', size = (10,5), font=('Arial Bold', 16)),
+           sg.Input(default_text = "", key = '_CHANGE_VALUE_', size = (10, 5), font=('Arial Bold', 16))],
+          [sg.Button('Start Fueling', key = '_FUELING_', size = (10, 5)),
+           sg.Button('Stop', key = '_STOP_', size = (10, 5)),
+           sg.Button('Resume', key = '_RESUME_', size = (10, 5)), sg.Button('Abort', key = '_ABORT_', size = (10,5))],
+          [ sg.Button('Status', key = "_STATUS_", size = (10,5)),
+           sg.Button('Toggle log', key = '_LOG_TOGGLE_', size = (10,5)), sg.Exit()]]  
+
+#layout = layout_rocket
+layout = layout_fill
 
 window = sg.Window('Window that stays open', layout)      
 
@@ -154,37 +193,44 @@ def arm():
 def print_status():
     global missed_packets
     global log_speed
-    if(len(buff) < 16):
-        print("bad status")
-        return
+    #if(len(buff) < 16):
+        #print("bad status")
+        #return
 
     state = int.from_bytes(buff[3:4], byteorder='big', signed=True)
     if state < 0 or state >= len(state_map_to_string): 
         print("bad state decoding", state)
         return
 
-    ax = int.from_bytes(buff[4:6], byteorder='big', signed=True)
-    ay = int.from_bytes(buff[6:8], byteorder='big', signed=True)
-    az = int.from_bytes(buff[8:10], byteorder='big', signed=True)
+    #ax = int.from_bytes(buff[4:6], byteorder='big', signed=True)
+    #ay = int.from_bytes(buff[6:8], byteorder='big', signed=True)
+    #az = int.from_bytes(buff[8:10], byteorder='big', signed=True)
 
-    ax = (ax * 0.244) / 1000 * 9.80665
-    ay = (ay * 0.244) / 1000 * 9.80665
-    az = (az * 0.244) / 1000 * 9.80665
+    #ax = (ax * 0.244) / 1000 * 9.80665
+    #ay = (ay * 0.244) / 1000 * 9.80665
+    #az = (az * 0.244) / 1000 * 9.80665
 
-    gx = int.from_bytes(buff[10:12], byteorder='big', signed=True)
-    gy = int.from_bytes(buff[12:14], byteorder='big', signed=True)
-    gz = int.from_bytes(buff[14:16], byteorder='big', signed=True)
+    #gx = int.from_bytes(buff[10:12], byteorder='big', signed=True)
+    #gy = int.from_bytes(buff[12:14], byteorder='big', signed=True)
+    #gz = int.from_bytes(buff[14:16], byteorder='big', signed=True)
 
     print("state", state)
     s1 = "State: " + state_map_to_string[state] + "\n"
-    sa = "Ax: " + str(round(ax, 2)) + " Ay: " + str(round(ay, 2)) + " Az: " + str(round(az, 2)) + "\n"
-    sg = "Gx: " + str(round(gx, 2)) + " Gy: " + str(round(gy, 2)) + " Gz: " + str(round(gz, 2)) + "\n"
+    
+    #sa = "Ax: " + str(round(ax, 2)) + " Ay: " + str(round(ay, 2)) + " Az: " + str(round(az, 2)) + "\n"
+    #sg = "Gx: " + str(round(gx, 2)) + " Gy: " + str(round(gy, 2)) + " Gz: " + str(round(gz, 2)) + "\n"
+
+    sp = "Pressure: " + str(int.from_bytes(buff[4:6], byteorder='big', signed=False)) + "\n"
+
     s2 = "Log Speed: " + str(round(log_speed, 0)) + "hz\nMissed packets: " + str(missed_packets) + "\n" 
-    s = s1 + sa + sg + s2
+
+    #s = s1 + sa + sg + s2
+    s = s1 + sp + s2
+
     window['_IMU_OUT_'].update(s)
 
-    print("ax:", ax, "ay:", ay, "az:", az)
-    print("gx:", gx, "gy:", gy, "gz:", gz)
+    #print("ax:", ax, "ay:", ay, "az:", az)
+    #print("gx:", gx, "gy:", gy, "gz:", gz)
 
 def read_cmd():
     global comm_state, sync_state, cmd_state, size_state, data_state, crc_1_state, crc_2_state, end_state
@@ -338,13 +384,19 @@ while True:
             read_cmd()
         elif event == '_STOP_':
             cmd_launched = 1
-            cmd = bytearray([0x55, command_map['STOP'], 0, 0x20, 0x21])
+            cmd = bytearray([0x55, command_map['STOP_PROG'], 0, 0x20, 0x21])
+            ser.write(cmd)
+            read_cmd()
+        elif event == '_RESUME_':
+            cmd_launched = 1
+            cmd = bytearray([0x55, command_map['RESUME_PROG'], 0, 0x20, 0x21])
             ser.write(cmd)
             read_cmd()
         elif event == '_EXEC_':
             cmd_launched = 1
             prog = window['_PROG_'].get()
             cmd = bytearray([0x55, command_map['EXEC_PROG'], 1, prog, 0x20, 0x21])
+            print("Comand sent", cmd)
             ser.write(cmd)
             read_cmd()
 

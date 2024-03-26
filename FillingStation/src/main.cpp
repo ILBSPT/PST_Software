@@ -283,13 +283,31 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
                 }
 
                 comm_transition[FUELING][CMD_EXEC_PROG] = next_state;
-            }
-        }
+                
+                command_rep.cmd = CMD_EXEC_PROG_ACK;
+                command_rep.size = 0;
+                command_rep.crc = 0x2121;
 
+                write_command(&command_rep, interface);
+                
+                return CMD_RUN_OK;
+            }
+            
+            return CMD_RUN_OUT_OF_BOUND;
+
+        }
+        break;
         default:
             // if the command has no action it still needs to return ok to change state
             if(cmd->cmd < cmd_size)
+            {
+                command_rep.cmd = CMD_ABORT_ACK; //TODO add default ack
+                command_rep.size = 0;
+                command_rep.crc = 0x2121;
+
+                write_command(&command_rep, interface);
                 return CMD_RUN_OK;
+            }
             else //cmd code out of bounds, return error
                 return CMD_RUN_OUT_OF_BOUND;
         break;
