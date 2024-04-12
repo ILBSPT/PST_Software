@@ -18,6 +18,9 @@ int16_t imu_gx;
 int16_t imu_gy;
 int16_t imu_gz;
 
+uint16_t tank_pressure = 0;
+uint16_t tank_liquid = 0;
+
 void idle_state(void) { return; }
 
 void toggle_led_high(void)
@@ -64,6 +67,8 @@ void imu_pid_calibration(void)
     readings, the integral value is used for the actual offsets and the last proportional reading is ignored due to 
     the fact it reacts to any noise.
   */
+    if(!accelgyro.testConnection()) return;
+
     accelgyro.CalibrateAccel(10);
     accelgyro.CalibrateGyro(10);
 
@@ -76,35 +81,82 @@ void imu_pid_calibration(void)
 
 }
 
+void read_pressures_test(void)
+{
+    tank_pressure = analogRead(Pressure_PIN);
+    //tank_pressure = (uint16_t)map(analogValue, 0, 4096, 0, 255);
+    //Serial.print("Pressure ");
+    //Serial.println(tank_pressure);
+    return;
+}
+void read_pressures(void)
+{
+    //Dummy function
+    read_pressures_test();
+    return;
+}
+
+void read_temperatures(void)
+{
+    //Dummy function
+    return;
+}
+
+void read_liquid_test(void)
+{
+    tank_liquid = analogRead(TankL_PIN);
+    return;
+}
+
+void calc_liquid(void)
+{
+    //calculate amount of liquid in the tank
+    read_liquid_test();
+    return;
+}
+
 void read_IMU(void) 
 {
-    if(accelgyro.testConnection())
-        accelgyro.getMotion6(&imu_ax, &imu_ay, &imu_az,
-                             &imu_gx, &imu_gy, &imu_gz);
+    //if(accelgyro.testConnection())
+        //accelgyro.getMotion6(&imu_ax, &imu_ay, &imu_az,
+                             //&imu_gx, &imu_gy, &imu_gz);
     return; 
 }
+
+void Vpu_close(void)
+{
+    digitalWrite(Vpu_PIN, 0);
+}
+
+void V4_close(void)
+{
+    digitalWrite(V4_PIN, 0);
+}
+
+void Vpu_open(void)
+{
+    digitalWrite(Vpu_PIN, 1);
+}
+
+void V4_open(void)
+{
+    digitalWrite(V4_PIN, 1);
+}
+
 
 void logger(void)
 {
     command_t command_rep;
-    command_rep.cmd = CMD_STATUS_ACK;
+    command_rep.cmd = CMD_STATUS;
 
-    command_rep.size = 2*6 + 1;
+    command_rep.size = 2*2 + 1;
     //command_rep.size = 100; //test
 
     command_rep.data[0] = state;
-    command_rep.data[1] = (imu_ax >> 8) & 0xff;
-    command_rep.data[2] = (imu_ax) & 0xff ;
-    command_rep.data[3] = (imu_ay >> 8) & 0xff;
-    command_rep.data[4] = (imu_ay) & 0xff;
-    command_rep.data[5] = (imu_az >> 8) & 0xff;
-    command_rep.data[6] = (imu_az) & 0xff;
-    command_rep.data[7] = (imu_gx >> 8) & 0xff;
-    command_rep.data[8] = (imu_gx) & 0xff;
-    command_rep.data[9] = (imu_gy >> 8) & 0xff;
-    command_rep.data[10] = (imu_gy) & 0xff;
-    command_rep.data[11] = (imu_gz >> 8) & 0xff;
-    command_rep.data[12] = (imu_gz) & 0xff;
+    command_rep.data[1] = (tank_pressure >> 8) & 0xff;
+    command_rep.data[2] = (tank_pressure) & 0xff;
+    command_rep.data[3] = (tank_liquid >> 8) & 0xff;
+    command_rep.data[4] = (tank_liquid) & 0xff;
     command_rep.crc = 0x5151;
 
     write_command(&command_rep, DEFAULT_LOG_INFERFACE);

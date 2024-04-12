@@ -13,17 +13,17 @@ rocket_state_t state = IDLE;
 
 //need to add a stop and see how the executin function changes
 rocket_state_t comm_transition[rocket_state_size][cmd_size] = {  
-//                STATUS ABORT EXEC  STOP   FUELING  READY  ARM   LED_ON LED_OFF IMU_CALIB  RESUME, ADD, REMOVE    
-/* Idle     */  {   -1,  ABORT, -1,   -1,   FUELING, READY, -1,     -1,     -1,  IMU_TUNE,    -1,    -1,   -1  },      
-/* Fueling  */  {   -1,  IDLE,  -1,   -1,     -1,     -1,   -1,     -1,     -1,     -1,       -1,    -1,   -1  },
-/* Prog 1   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1,    -1,   -1  },
-/* Prog 2   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1,    -1,   -1  },
-/* Safety   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1,    -1,   -1  },
-/* Ready    */  {   -1,  IDLE,  -1,   -1,     -1,     -1,   ARMED,  -1,     -1,  IMU_TUNE,    -1,    -1,   -1  },
-/* Armed    */  {   -1,  IDLE,  -1,   -1,     -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1,    -1,   -1  },
-/* Launch   */  {   -1,  ABORT, -1,   -1,     -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1,    -1,   -1  },
-/* Abort    */  {   -1,   -1,   -1,   -1,     -1,    IDLE,  -1,     -1,     -1,  IMU_TUNE,    -1,    -1,   -1  },
-/* IMU PID  */  {   -1,  IDLE,  -1,   -1,     -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1,    -1,   -1  }
+//                STATUS ABORT EXEC  STOP   FUELING  READY  ARM   LED_ON LED_OFF IMU_CALIB  RESUME    
+/* Idle     */  {   -1,  ABORT, -1,   -1,   FUELING, READY, -1,     -1,     -1,  IMU_TUNE,    -1 },
+/* Fueling  */  {   -1,  IDLE,  -1,   IDLE,   -1,     -1,   -1,     -1,     -1,     -1,       -1 },
+/* Prog 1   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1 },
+/* Prog 2   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1 },
+/* Safety   */  {   -1,  ABORT, -1, FUELING,  -1,     -1,   -1,     -1,     -1,     -1,       -1 },
+/* Ready    */  {   -1,  IDLE,  -1,   IDLE,   -1,     -1,   ARMED,  -1,     -1,  IMU_TUNE,    -1 },
+/* Armed    */  {   -1,  IDLE,  -1,  READY,   -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1 },
+/* Launch   */  {   -1,  ABORT, -1,   -1,     -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1 },
+/* Abort    */  {   -1,   -1,   -1,   -1,     -1,    IDLE,  -1,     -1,     -1,  IMU_TUNE,    -1 },
+/* IMU PID  */  {   -1,  IDLE,  -1,   -1,     -1,     -1,   -1,     -1,     -1,  IMU_TUNE,    -1 }
 };
 
 /*1*/ // don't allow sensor calibration once rocket is armed, arming the rocket hould be the last step before laucnh (right?)
@@ -43,8 +43,11 @@ State_t state_machine[rocket_state_size] =
     },
     //FUELING
     {
-        .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = toggle_led, .delay = 200, .begin = 0} },
+        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
+                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
+                  {.chanel = blink_led, .delay = 200, .begin = 0},
+                  {.chanel = logger, .delay = 20, .begin = 0} },
 
         .events = {},
 
@@ -52,28 +55,40 @@ State_t state_machine[rocket_state_size] =
     },
     //PROG1
     {
-        .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = blink_led, .delay = 200, .begin = 0} },
+        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
+                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
+                  {.chanel = Vpu_close, .delay = 500, .begin = 0},
+                  {.chanel = blink_led, .delay = 200, .begin = 0},
+                  {.chanel = logger, .delay = 20, .begin = 0} },
 
-        .events = {},
+        .events = { {.condition = prog1_stop_cond, .reaction = Vpu_open, .next_state = SAFETY} },
 
         .comms = comm_transition[PROG1],
     },
     //PROG2
     {
-        .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = toggle_led, .delay = 1000, .begin = 0} },
+        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
+                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
+                  {.chanel = Vpu_open, .delay = 500, .begin = 0},
+                  {.chanel = blink_led, .delay = 200, .begin = 0},
+                  {.chanel = logger, .delay = 20, .begin = 0} },
 
-        .events = {},
+        .events = { {.condition = prog2_finish_cond, .reaction = Vpu_close, .next_state = FUELING} },
 
         .comms = comm_transition[PROG2],
     },
     //SAFETY
     {
-        .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
-                  {.chanel = toggle_led, .delay = 1000, .begin = 0} },
+        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
+                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
+                  {.chanel = Vpu_open, .delay = 500, .begin = 0},
+                  {.chanel = blink_led, .delay = 200, .begin = 0},
+                  {.chanel = logger, .delay = 20, .begin = 0} },
 
-        .events = {},
+        .events = { {.condition = safety_stop_cond, .reaction = Vpu_close, .next_state = PROG1} },
 
         .comms = comm_transition[SAFETY],
     },

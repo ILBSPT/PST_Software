@@ -13,14 +13,14 @@ rocket_state_t state = IDLE;
 
 //need to add a stop and see how the executin function changes
 rocket_state_t comm_transition[rocket_state_size][cmd_size] = {  
-//                STATUS ABORT EXEC   STOP   FUELING    [Flight cmds]  RESUME, ADD, REMOVE    
-/* Idle    */   {   -1 , ABORT, -1,   -1,    FUELING,  -1,-1,-1,-1,-1,    -1,  -1,   -1   },      
-/* FUELING */   {   -1 , IDLE,  -1,   -1,    FUELING,  -1,-1,-1,-1,-1,    -1,  -1,   -1   },      
-/* Prog1   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,  -1,   -1   },      
-/* Prog2   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,  -1,   -1   },      
-/* Prog3   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,  -1,   -1   },      
-/* Stop    */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,  PROG2, -1,   -1   },      
-/* Abort   */   {   -1 ,  -1,   -1,   -1,      IDLE,   -1,-1,-1,-1,-1,    -1   -1,   -1   },      
+//                STATUS ABORT EXEC   STOP   FUELING    [Flight cmds]  RESUME
+/* Idle    */   {   -1 , ABORT, -1,   -1,    FUELING,  -1,-1,-1,-1,-1,    -1  },
+/* FUELING */   {   -1 , IDLE,  -1,   IDLE,  FUELING,  -1,-1,-1,-1,-1,    -1  },
+/* Prog1   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
+/* Prog2   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
+/* Prog3   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
+/* Stop    */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,  PROG2 },
+/* Abort   */   {   -1 ,  -1,   -1,   -1,      IDLE,   -1,-1,-1,-1,-1,    -1  },
 };
 
 /*
@@ -34,8 +34,8 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  //{.chanel = echo_reply, .delay = 10} 
-                  {.chanel = toggle_led, .delay = 1000}
+                  {.chanel = toggle_led, .delay = 1000},
+                  {.chanel = echo_reply, .delay = 10}, 
                 },
 
         .events = {},
@@ -48,7 +48,9 @@ State_t state_machine[rocket_state_size] =
                   {.chanel = read_temperatures, .delay = 10},
                   {.chanel = V1_close, .delay = 500},
                   {.chanel = V2_close, .delay = 500},
-                  {.chanel = V3_close, .delay = 500} },
+                  {.chanel = V3_close, .delay = 500}, 
+                  {.chanel = echo_reply, .delay = 10}, 
+                },
 
         .events = {},
 
@@ -59,7 +61,9 @@ State_t state_machine[rocket_state_size] =
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
                   {.chanel = V1_open, .delay = 500},
-                  {.chanel = toggle_led, .delay = 100} },
+                  {.chanel = toggle_led, .delay = 100}, 
+                  {.chanel = echo_reply, .delay = 10}, 
+                },
 
         .events = { {.condition = prog1_finish_cond, .reaction = V1_close, .next_state = FUELING} },
 
@@ -69,7 +73,9 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  {.chanel = V2_open, .delay = 500} },
+                  {.chanel = V2_open, .delay = 500}, 
+                  {.chanel = echo_reply, .delay = 10}, 
+                },
 
         .events = { {.condition = prog2_stop_cond, .reaction = V2_close, .next_state = STOP},
                     {.condition = prog2_finish_cond, .reaction = V2_close, .next_state = FUELING} },
@@ -80,7 +86,9 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  {.chanel = V3_open, .delay = 500} },
+                  {.chanel = V3_open, .delay = 500},
+                  {.chanel = echo_reply, .delay = 10}, 
+                },
 
         .events = { {.condition = prog3_finish_cond, .reaction = V3_close, .next_state = FUELING} },
 
@@ -90,7 +98,9 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_pressures, .delay = 10},
                   {.chanel = read_temperatures, .delay = 10},
-                  {.chanel = V2_close, .delay = 500} },
+                  {.chanel = V2_close, .delay = 500}, 
+                  {.chanel = echo_reply, .delay = 10}, 
+                },
 
         .events = {},
 
@@ -99,7 +109,8 @@ State_t state_machine[rocket_state_size] =
     //ABORT
     {
         .work = { {.chanel = read_pressures, .delay = 10},
-                  {.chanel = read_temperatures, .delay = 10}},
+                  {.chanel = read_temperatures, .delay = 10}
+                },
 
         .events = {},
 

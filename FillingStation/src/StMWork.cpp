@@ -20,6 +20,7 @@ int16_t imu_gy;
 int16_t imu_gz;
 
 uint16_t tank_pressure = 0;
+uint16_t tank_liquid = 0;
 
 void idle_state(void) { return; }
 
@@ -35,18 +36,10 @@ void toggle_led(void)
     digitalWrite(LED_PIN, led_status);
 }
 
-void read_pressures_test(void)
-{
-    tank_pressure = analogRead(Pressure_PIN);
-    //tank_pressure = (uint16_t)map(analogValue, 0, 4096, 0, 255);
-    //Serial.print("Pressure ");
-    //Serial.println(tank_pressure);
-    return;
-}
 void read_pressures(void)
 {
     //Dummy function
-    read_pressures_test();
+    //read pressure of the fedding lines
     return;
 }
 
@@ -99,26 +92,27 @@ void echo_reply(void)
         error == CMD_READ_OK &&
         cmd->cmd == CMD_STATUS) 
     {
+        /* Update rocket tank values */
+        tank_pressure =  (cmd->data[1] << 8) + (cmd->data[2]);
+        tank_liquid =  (cmd->data[3] << 8) + (cmd->data[4]);
+
+        /* Send response to the bus*/
         command_t command_rep;
         command_rep.cmd = CMD_STATUS_ACK;
 
-        command_rep.size = 2*6 + 1;
+        command_rep.size = 2*4 + 1;
         //command_rep.size = 100; //test
 
         command_rep.data[0] = state;
-        command_rep.data[1] = (imu_ax >> 8) & 0xff;
-        command_rep.data[2] = (imu_ax) & 0xff ;
-        command_rep.data[3] = (imu_ay >> 8) & 0xff;
-        command_rep.data[4] = (imu_ay) & 0xff;
-        command_rep.data[5] = (imu_az >> 8) & 0xff;
-        command_rep.data[6] = (imu_az) & 0xff;
-        command_rep.data[7] = (imu_gx >> 8) & 0xff;
-        command_rep.data[8] = (imu_gx) & 0xff;
-        command_rep.data[9] = (imu_gy >> 8) & 0xff;
-        command_rep.data[10] = (imu_gy) & 0xff;
-        command_rep.data[11] = (imu_gz >> 8) & 0xff;
-        command_rep.data[12] = (imu_gz) & 0xff;
-        command_rep.crc = 0x5151;
+        command_rep.data[1] = 0;
+        command_rep.data[2] = 1;
+        command_rep.data[3] = 2;
+        command_rep.data[4] = 3;
+        command_rep.data[5] = 4;
+        command_rep.data[6] = 5;
+        command_rep.data[7] = 6;
+        command_rep.data[8] = 7;
+        command_rep.crc = 0x5252;
 
         write_command(&command_rep, DEFAULT_LOG_INFERFACE);
     }

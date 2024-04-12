@@ -73,10 +73,6 @@ typedef enum
 //FILLING station commands
     CMD_RESUME_PROG,
 
-//State machine commands
-    CMD_ADD_WORK,
-    CMD_REMOVE_WORK,
-
 //used to get the number of commands 
     cmd_size,
 
@@ -92,8 +88,6 @@ typedef enum
     CMD_LED_OFF_ACK,
     CMD_IMU_CALIBRATE_ACK,
     CMD_RESUME_PROG_ACK,
-    CMD_ADD_WORK_ACK,
-    CMD_REMOVE_WORK_ACK,
 } cmd_type_t;
 
 typedef enum

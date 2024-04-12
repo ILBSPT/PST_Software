@@ -18,9 +18,16 @@ extern int16_t imu_gx;
 extern int16_t imu_gy;
 extern int16_t imu_gz;
 
-//transitional variables for states when calibrating
-extern uint8_t brackets_out_done;
-extern uint8_t brackets_in_done;
+//---------------Valve state------------
+//extern uint8_t v1;
+//extern uint8_t v3;
 
+//---------------Tank sensor state--------------
+extern uint16_t tank_pressure;
+extern uint16_t tank_liquid;
+
+
+//---------------Tank stm vars----------------
+extern uint16_t RP1, RP2, RP3;
 
 #endif

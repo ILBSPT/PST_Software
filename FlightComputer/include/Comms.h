@@ -19,8 +19,8 @@
 
 #include "HardwareCfg.h"
 
-#define MAX_COMMAND_BUFFER 100
-#define RS485_TIMEOUT_TIME_MS 50 //try to get limit bounds 
+#define MAX_COMMAND_BUFFER 150
+#define RS485_TIMEOUT_TIME_MS 500 //try to get limit bounds 
 //#define RS485_TIMEOUT_TIME_MS 5000
 
 /*
@@ -73,10 +73,6 @@ typedef enum
 //FILLING station commands
     CMD_RESUME_PROG,
 
-//State machine commands
-    CMD_ADD_WORK,
-    CMD_REMOVE_WORK,
-
 //used to get the number of commands 
     cmd_size,
 
@@ -92,8 +88,6 @@ typedef enum
     CMD_EXEC_PROG_ACK,
     CMD_STOP_PROG_ACK,
     CMD_RESUME_PROG_ACK,
-    CMD_ADD_WORK_ACK,
-    CMD_REMOVE_WORK_ACK,
 } cmd_type_t;
 
 typedef enum

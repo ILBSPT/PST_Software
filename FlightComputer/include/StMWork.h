@@ -14,6 +14,16 @@ void toggle_led_low(void);
 void toggle_led(void);
 void blink_led(void);
 
+void read_pressures(void);
+void read_temperatures(void);
+void calc_liquid(void);
+
+void Vpu_close(void);
+void V4_close(void);
+
+void Vpu_open(void);
+void V4_open(void);
+
 void imu_pid_calibration(void);
 void read_IMU(void); 
 
