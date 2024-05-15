@@ -16,6 +16,7 @@ void write_command(command_t* cmd, interface_t interface)
     
     buff[size++] = 0x55;
     buff[size++] = cmd->cmd;
+    buff[size++] = cmd->id;
     buff[size++] = cmd->size;
     for(int i = 0; i < cmd->size; i++)
         buff[size++] = cmd->data[i];
@@ -60,6 +61,11 @@ static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_
 
         case CMD:
             command->cmd = (cmd_type_t)read_byte;
+            state = ID;
+        break;
+
+        case ID:
+            command->id = (cmd_type_t)read_byte;
             state = SIZE;
         break;
 

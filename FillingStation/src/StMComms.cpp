@@ -8,6 +8,7 @@
 int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 {
     command_t command_rep;
+    command_rep.id = DEFAULT_ID;
     rocket_state_t return_state = state;
     switch(cmd->cmd)
     {

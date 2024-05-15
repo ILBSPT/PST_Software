@@ -25,4 +25,9 @@ typedef enum
 #define DEFAULT_LOG_INFERFACE RS485_INTERFACE
 #define DEFAULT_SYNC_INTERFACE Uart_INTERFACE
 
+#define ROCKET_ID 1
+#define FILL_STATION_ID 2
+
+#define DEFAULT_ID ROCKET_ID 
+
 #endif

@@ -103,7 +103,7 @@ typedef enum
 typedef struct 
 {
     cmd_type_t cmd;
-    //int id;
+    uint8_t id;
     uint8_t size;
     uint8_t data[MAX_COMMAND_BUFFER];
     uint16_t crc;
@@ -116,6 +116,7 @@ typedef enum
 {
     SYNC = 0,
     CMD,
+    ID,
     SIZE,
     DATA,
     CRC1, //first byte of crc
