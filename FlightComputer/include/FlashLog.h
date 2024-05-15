@@ -8,6 +8,7 @@
 #include "Comms.h"
 
 #define LOG_FILE_SIZE 1<<12 //4096 bytes
+#define LOG_NAME_PATTERN "%c_log.bin"
 
 extern bool log_running;
 extern SerialFlashFile flashFile;
@@ -19,8 +20,8 @@ void stop_log();
 
 void log_command(command_t* cmd);
 
-void show_directory();
-void dump_log(int log); 
-void remove_log(int log);
+void dump_log(uint8_t log); 
+void get_log_ids(uint8_t files[256], uint8_t *file_index);
+
 
 #endif

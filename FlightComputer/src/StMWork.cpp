@@ -148,6 +148,7 @@ void logger(void)
 {
     command_t command_rep;
     command_rep.cmd = CMD_STATUS;
+    command_rep.id = DEFAULT_ID;
 
     command_rep.size = 2*2 + 1;
     //command_rep.size = 100; //test

@@ -99,6 +99,7 @@ void echo_reply(void)
         /* Send response to the bus*/
         command_t command_rep;
         command_rep.cmd = CMD_STATUS_ACK;
+        command_rep.id = DEFAULT_ID;
 
         command_rep.size = 2*4 + 1;
         //command_rep.size = 100; //test

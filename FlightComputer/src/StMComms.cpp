@@ -5,10 +5,12 @@
 
 #include "StMComms.h"
 
+#include "FlashLog.h"
+
 int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 {
     command_t command_rep;
-    command_rep.id = DEFAULT_ID;
+    command_rep.id = GROUND_ID;
     rocket_state_t return_state = state;
     switch(cmd->cmd)
     {
@@ -184,7 +186,73 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
                 }
 
                 comm_transition[FUELING][CMD_EXEC_PROG] = next_state;
+                
+                return CMD_RUN_OK;
             }
+            else
+            {
+                return CMD_RUN_STATE_ERROR;
+            }
+            
+        }
+
+        case CMD_FLASH_LOG_START:
+        {
+            log_running = 1;
+
+            command_rep.cmd = CMD_FLASH_LOG_START_ACK;
+            command_rep.size = 0;
+            command_rep.crc = 0x2121;
+
+            write_command(&command_rep, interface);
+
+            return CMD_RUN_OK;
+        }
+
+        case CMD_FLASH_LOG_STOP:
+        {
+            log_running = 0;
+
+            command_rep.cmd = CMD_FLASH_LOG_STOP_ACK;
+            command_rep.size = 0;
+            command_rep.crc = 0x2121;
+
+            write_command(&command_rep, interface);
+
+            return CMD_RUN_OK;
+        }
+
+        case CMD_FLASH_IDS:
+        {
+            uint8_t files[256];
+            uint8_t index;
+            get_log_ids(files, &index);
+
+            command_rep.cmd = CMD_FLASH_IDS_ACK;
+            command_rep.size = index;
+
+            for(int i = 0; i < index; i++)
+                command_rep.data[i] = files[i];
+
+            command_rep.crc = 0x2121;
+
+            write_command(&command_rep, interface);
+
+            return CMD_RUN_OK;
+        }
+
+        case CMD_FLASH_DUMP:
+        {
+            uint8_t id = cmd->data[0];
+            dump_log(id);
+
+            command_rep.cmd = CMD_FLASH_DUMP_ACK;
+            command_rep.size = 0;
+            command_rep.crc = 0x2121;
+
+            write_command(&command_rep, interface);
+
+            return CMD_RUN_OK;
         }
 
         default:

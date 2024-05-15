@@ -40,6 +40,7 @@
 #define CMD_RUN_DEFAULT_ERROR 2
 #define CMD_RUN_NO_ACTION 3
 #define CMD_RUN_OUT_OF_BOUND 4
+#define CMD_RUN_STATE_ERROR 5
 
 /*
     Arm Stages
@@ -73,6 +74,12 @@ typedef enum
 //FILLING station commands
     CMD_RESUME_PROG,
 
+//Flash log commands
+    CMD_FLASH_LOG_START,
+    CMD_FLASH_LOG_STOP,
+    CMD_FLASH_IDS,
+    CMD_FLASH_DUMP,
+
 //used to get the number of commands 
     cmd_size,
 
@@ -88,6 +95,10 @@ typedef enum
     CMD_EXEC_PROG_ACK,
     CMD_STOP_PROG_ACK,
     CMD_RESUME_PROG_ACK,
+    CMD_FLASH_LOG_START_ACK,
+    CMD_FLASH_LOG_STOP_ACK,
+    CMD_FLASH_IDS_ACK,
+    CMD_FLASH_DUMP_ACK,
 } cmd_type_t;
 
 typedef enum

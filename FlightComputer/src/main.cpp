@@ -27,6 +27,7 @@
 #include "StateMachine.h"
 #include "StMComms.h"
 #include "StMWork.h"
+#include "FlashLog.h"
 
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
@@ -38,7 +39,6 @@
 #include <Crc.h>
 
 #include <SerialFlash.h>
-#include <Log.h>
 
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
