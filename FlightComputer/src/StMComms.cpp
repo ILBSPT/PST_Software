@@ -198,7 +198,8 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 
         case CMD_FLASH_LOG_START:
         {
-            log_running = 1;
+            start_log();
+            //log_running = 1;
 
             command_rep.cmd = CMD_FLASH_LOG_START_ACK;
             command_rep.size = 0;
@@ -211,7 +212,8 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 
         case CMD_FLASH_LOG_STOP:
         {
-            log_running = 0;
+            stop_log();
+            //log_running = 0;
 
             command_rep.cmd = CMD_FLASH_LOG_STOP_ACK;
             command_rep.size = 0;

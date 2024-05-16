@@ -10,7 +10,8 @@
 #define Pressure_PIN 15
 #define TankL_PIN 0
 
-#define Flash_SS_PIN 10
+#define Flash_SS_PIN 5
+//#define Flash_SS_PIN 39
 #define LoRa_SS_PIN 11
 
 #define SERIAL_BAUD 115000

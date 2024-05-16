@@ -7,6 +7,8 @@
 #include "Target.h"
 #include "Comms.h"
 
+#include "FlashLog.h"
+
 #include <LoRa.h>
 
 void write_command(command_t* cmd, interface_t interface)
@@ -23,6 +25,8 @@ void write_command(command_t* cmd, interface_t interface)
     buff[size++] = ((cmd->crc >> 8) & 0xff);
     buff[size++] = ((cmd->crc) & 0xff);
 
+    log_command(cmd);
+    
     switch(interface)
     {
         case LoRa_INTERFACE:
@@ -164,11 +168,13 @@ command_t* read_command(int* error, interface_t interface)
         return NULL;
     }
     //if bad cr reset state
-    else if(*state == END /* && check_crc(&command) */)
+    else if(*state == END && command->id == DEFAULT_ID /* && check_crc(&command) */)
     {
         *state = SYNC;
 
         *error = CMD_READ_OK;
+
+        log_command(command);
         return command;
     }
     else if(*state == END)

@@ -105,7 +105,7 @@ void LoRa_Setup(void)
   Serial.println("Lora starting");
   if (!LoRa.begin(868E6)) {
     Serial.println("Starting LoRa failed!");
-    while (1);
+    //while (1);
   }
 }
 
@@ -124,6 +124,8 @@ void setup() {
     LoRa_Setup();
 
     Valves_Setup();
+
+    init_log();
 
     //setup trigger switch
     pinMode(TRIGGER, INPUT_PULLUP);

@@ -3,72 +3,86 @@
 #include "HardwareCfg.h"
 
 bool log_running = false;
-SerialFlashFile flashFile;
+File file;
 
 uint8_t current_id;
 uint32_t data_used;
 
-void start_log() { log_running = true; }
-void stop_log() { log_running = false; }
+void start_log()
+{ 
+    log_running = true; 
+    
+    /*
+     * TODO
+     *   before opening verify that the file does not exist, 
+     *   256 diferent reboots before we are out of files 
+    */
+    char filename[100] = "";
+    int count = sprintf(filename, LOG_NAME_PATTERN, current_id);
+    current_id++;
+    Serial.print("new file \n");
+    Serial.print(filename);
+    Serial.print("\n");
+
+    file = SD.open(filename, FILE_WRITE, true);
+
+    if(!file)
+    {
+        assert(false);
+    }
+}
+void stop_log() 
+{ 
+    log_running = false; 
+    file.close();
+}
 
 static uint8_t get_last_id()
 {
-    uint8_t last_log_id = -1;
-    SerialFlash.opendir();
-    while (1) {
-        char filename[64];
-        uint32_t filesize;
+    File root = SD.open("/");
+    uint8_t last_log_id = 0;
+    while(1)
+    {
+        File entry = root.openNextFile();
 
-        if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+        if(!entry)
+            break; //no more files
+
+        if(!entry.isDirectory()) 
+        {
             uint8_t temp;
-            sscanf(filename, LOG_NAME_PATTERN, &temp);
+            sscanf(entry.name(), "%u", &temp);
+            Serial.print(temp);
             last_log_id = max(last_log_id, temp);
-            
-        } else {
-            break; // no more files
         }
+        Serial.print(" Name in sd: ");
+        Serial.print(entry.name());
+        Serial.print(" ");
+        Serial.print(entry.isDirectory());
+        Serial.print(" \n");
+
+        entry.close();
     }
+
+    root.close();
 
     return last_log_id;
-}
-
-static bool new_log_file(SerialFlashFile* file)
-{
-    char filename[100];
-    sprintf(filename, LOG_NAME_PATTERN, current_id);
-    if(!SerialFlash.create(filename, LOG_FILE_SIZE, 0))
-    {
-        printf("error creating log file");
-        return false;
-    }
-     
-    *file = SerialFlash.open(filename);
-    if(!flashFile)
-    {
-        printf("error opening log file");
-        return false;
-    }
-    
-    current_id++;
-    data_used = 0;
-    return true;
-
 }
 
 void init_log()
 {
     bool created = false;
 
-    if (!SerialFlash.begin(Flash_SS_PIN)) {
-        printf("Unable to access SPI Flash chip");
+    if (!SD.begin(Flash_SS_PIN)) {
+        printf("Unable to access SPI Flash chip\n");
         return;
     }
 
     current_id = get_last_id() + 1;
-    if(!new_log_file(&flashFile))
-    {
-        assert(false);
-    }
+    Serial.print("current id");
+    Serial.print(current_id);
+    Serial.printf("\n");
+
 }
 
 void log_command(command_t* cmd)
@@ -91,15 +105,8 @@ void log_command(command_t* cmd)
     buff[index++] = (time >> 8)  & 0xff;
     buff[index++] = (time)       & 0xff;
     buff[index++] = '\n';
-    
-    if(data_used + index >= LOG_FILE_SIZE) 
-        if(!new_log_file(&flashFile))
-        {
-            return;
-        }
 
-    data_used += index;
-    flashFile.write(buff, index);
+    file.write(buff, index);
 }
 
 
@@ -112,34 +119,56 @@ void dump_log(uint8_t id)
     }
 
     char filename[100];
-    sprintf(filename, "%d_log.bin", id);
+    sprintf(filename, LOG_NAME_PATTERN, id);
 
-    SerialFlashFile flashDump = SerialFlash.open(filename);
+    File flashDump = SD.open(filename);
     if(!flashDump)
     {
-        printf("error openening log file");
+        printf("error openening log file\n");
         return;
     }
 
-    uint8_t buff[LOG_FILE_SIZE];
-    flashDump.read(buff, LOG_FILE_SIZE);
+    //first send the size of the file
+    Serial.printf("%c%c", (flashDump.size() >> 8) & 0xff, flashDump.size() & 0xff);
 
-    Serial.write(buff, LOG_FILE_SIZE);
+    uint8_t buff[LOG_FILE_SIZE];
+    while(flashDump.available())
+    {
+        Serial.write(flashDump.read());
+    }
+
+    flashDump.close();
 }
 
-void get_log_ids(uint8_t files[256], uint8_t* files_index)
+void get_log_ids(uint8_t* files, uint8_t* files_index)
 {
     *files_index = 0;
-    SerialFlash.opendir();
-    while (1) {
-        char filename[64];
-        uint32_t filesize;
 
-        if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
-            sscanf(filename, LOG_NAME_PATTERN, (files + *files_index));
-            *files_index++;
-        } else {
-            break; // no more files
+    File root = SD.open("/");
+    while(1)
+    {
+        File entry = root.openNextFile();
+        if(!entry)
+            break; //no more files
+
+        if(!entry.isDirectory()) 
+        {
+            uint8_t temp;
+            sscanf(entry.name(), "%u", &temp);
+            *(files + (*files_index)) = temp;
+            //Serial.printf("%u\n", *(files + (*files_index)));
+            (*files_index)++;
         }
+
+        Serial.print(" Name in sd: ");
+        Serial.print(entry.name());
+        Serial.print(" ");
+        Serial.print(*files_index);
+        Serial.print(" \n");
+
+        entry.close();
     }
+
+    root.close();
+
 }
