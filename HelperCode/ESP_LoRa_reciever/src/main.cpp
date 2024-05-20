@@ -7,7 +7,7 @@ MAX6675 thermocouple(18, 0, 19);
 
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(9600);
+  Serial2.begin(115200);
 
   while (!Serial);
   while (!Serial2);
