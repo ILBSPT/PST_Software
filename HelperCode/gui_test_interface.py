@@ -273,7 +273,18 @@ def print_status():
     #gx = int.from_bytes(buff[11:13], byteorder='big', signed=True)
     #gy = int.from_bytes(buff[13:15], byteorder='big', signed=True)
     #gz = int.from_bytes(buff[15:17], byteorder='big', signed=True)
+    
+    t1 = int.from_bytes(buff[5:7], byteorder='big', signed=True) 
+    t2 = int.from_bytes(buff[7:9], byteorder='big', signed=True) 
+    p1 = int.from_bytes(buff[9:11], byteorder='big', signed=True) 
+    p2 = int.from_bytes(buff[11:13], byteorder='big', signed=True) 
 
+    print("state", state)
+    s1 = "State: " + state_map_to_string_rocket[state] + "\n"
+    st1 = "T1: " + str(t1) + '\n'
+    st2 = "T2: " + str(t2) + '\n'
+    sp1 = "P1: " + str(p1) + '\n'
+    sp2 = "P2: " + str(p2) + '\n'
     print("state", state)
     s1 = "State: " + state_map_to_string[state] + "\n"
     
@@ -288,8 +299,9 @@ def print_status():
     s2 = "Log Speed: " + str(round(log_speed, 0)) + "hz\nMissed packets: " + str(missed_packets) + "\n" 
 
     #s = s1 + sa + sg + s2
-    s = s1 + sl + sp + s2
+    #s = s1 + sl + sp + s2
 
+    s = s1 + st1 + st2 + sp1 + sp2 + s2
     window['_STATUS_OUT_'].update(s)
 
     #print("ax:", ax, "ay:", ay, "az:", az)

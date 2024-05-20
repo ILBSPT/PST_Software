@@ -3,7 +3,7 @@ import time
 import serial
 
 #mac
-ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
 #ser = serial.Serial('/dev/cu.usbserial-4', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
@@ -14,6 +14,7 @@ message_timeout = 0.3
 missed_packets = 0
 log_speed = 0
 last_log = 0
+
 
 command_map = {
     "STATUS" : 0,
@@ -34,30 +35,44 @@ command_map = {
 #FILLING station commands
     "RESUME_PROG" : 10,
 
-#State machine commands
-    "ADD_WORK" : 11,
-    "REMOVE_WORK" : 12,
+#FLASH log commands
+    "FLASH_LOG_START" : 11,
+    "FLASH_LOG_STOP" : 12,
+    "FLASH_IDS" : 13,
+    "FLASH_DUMP" : 14,
 
 #used to get the number of commands 
-    "cmd_size" : 13,
+    "cmd_size" : 15,
 
 #ACKs
-    "STATUS_ACK" : 14,
-    "FUELING_ACK" : 15,
-    "READY_ACK" : 16,
-    "ARM_ACK" : 17,
-    "ABORT_ACK" : 18, 
-    "LED_ON_ACK" : 19,
-    "LED_OFF_ACK" : 20,
-    "IMU_CALIB_ACK" : 21,
-    "EXEC_PROG_ACK" : 22,
-    "STOP_PROG_ACK" : 23,
-    "RESUME_PROG_ACK" : 24,
-    "ADD_WORK_ACK" : 25,
-    "REMOVE_WORK_ACK" : 26 
+    "STATUS_ACK" : 16,
+    "ABORT_ACK" : 17, 
+    "EXEC_PROG_ACK" : 18,
+    "STOP_PROG_ACK" : 19,
+    "FUELING_ACK" : 20,
+    "READY_ACK" : 21,
+    "ARM_ACK" : 22,
+    "LED_ON_ACK" : 23,
+    "LED_OFF_ACK" : 24,
+    "IMU_CALIB_ACK" : 25,
+    "RESUME_PROG_ACK" : 26,
+    "FLASH_LOG_START_ACK" : 27,
+    "FLASH_LOG_STOP_ACK" : 28,
+    "FLASH_IDS_ACK" : 29,
+    "FLASH_DUMP_ACK" : 30,
 }
 
-state_map = {
+state_map_fill = {
+    "IDLE" : 0,
+    "FUELING" : 1,
+    "PROG1" : 2,
+    "PROG2" : 3,
+    "PROG3" : 4,
+    "STOP" : 5,
+    "ABORT": 6,
+}
+
+state_map_rocket = {
     "IDLE" : 0,
     "FUELING" : 1,
     "PROG1" : 2,
@@ -70,7 +85,17 @@ state_map = {
     "IMU_CALIB": 9
 }
 
-state_map_to_string = {
+state_map_to_string_fill = {
+    0 : "IDLE",
+    1 : "FUELING",
+    2 : "PROG1",
+    3 : "PROG2",
+    4 : "PROG3",
+    5 : "SAFETY",
+    6 : "ABORT",
+}
+
+state_map_to_string_rocket = {
     0 : "IDLE",
     1 : "FUELING",
     2 : "PROG1",
@@ -85,11 +110,12 @@ state_map_to_string = {
 
 sync_state = 1
 cmd_state = 2
-size_state = 3
-data_state = 4
-crc_1_state = 5
-crc_2_state = 6
-end_state = 7
+id_state = 3
+size_state = 4
+data_state = 5
+crc_1_state = 6
+crc_2_state = 7
+end_state = 8
 
 comm_state = sync_state
 data_total = 0
@@ -100,10 +126,36 @@ buff = bytearray()
 
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
-layout = [[sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_IMU_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
+layout = [[sg.Text("Rocket:\n", key = '_ROCKET_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Fill Station:\n", key = '_FILL_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16))],
           [sg.Exit()]]      
 
 window = sg.Window('Window that stays open', layout)      
+
+def print_rocket():
+    state = int.from_bytes(buff[4:5], byteorder='big', signed=False)
+    if state < 0 or state >= len(state_map_to_string_rocket): 
+        print("bad state decoding")
+        return
+    
+    t1 = int.from_bytes(buff[5:7], byteorder='big', signed=True) 
+    t2 = int.from_bytes(buff[7:9], byteorder='big', signed=True) 
+    p1 = int.from_bytes(buff[9:11], byteorder='big', signed=True) 
+    p2 = int.from_bytes(buff[11:13], byteorder='big', signed=True) 
+
+    print("state", state)
+    s1 = "State: " + state_map_to_string_rocket[state] + "\n"
+    st1 = "T1: " + str(t1) + '\n'
+    st2 = "T2: " + str(t2) + '\n'
+    sp1 = "P1: " + str(p1) + '\n'
+    sp2 = "P2: " + str(p2) + '\n'
+
+    s2 = "Log Speed: " + str(round(log_speed, 0)) + "hz\nMissed packets: " + str(missed_packets) + "\n" 
+    s = s1 + st1 + st2 + sp1 + sp2 + s2
+    window['_ROCKET_OUT_'].update(s)
+    return
+
+def print_fill_station():
+    return
 
 def print_status():
     global missed_packets
@@ -111,11 +163,17 @@ def print_status():
     if(len(buff) < 16):
         print("bad status")
         return
+    #first 4 bytes of buffer are
+    # 0 - 0x55
+    # 1 - cmd
+    # 2 - id
+    # 3 - size
+    id = int.from_bytes(buff[2:3], byteorder='big', signed=False)
 
-    state = int.from_bytes(buff[3:4], byteorder='big', signed=True)
-    if state < 0 or state >= len(state_map_to_string): 
-        print("bad state decoding")
-        return
+    if id == 0x1: return print_rocket()
+    elif id == 0x2: return print_fill_station()
+    else: return
+
 
     ax = int.from_bytes(buff[4:6], byteorder='big', signed=True)
     ay = int.from_bytes(buff[6:8], byteorder='big', signed=True)
@@ -168,6 +226,10 @@ def read_cmd():
                 #print(str(ch).encode('utf-8'))
 
         elif comm_state == cmd_state:
+            buff.append(ch)
+            comm_state = id_state
+
+        elif comm_state == id_state:
             buff.append(ch)
             comm_state = size_state
 
@@ -237,7 +299,7 @@ while True:
     #while ser.in_waiting > 0:
         #print(ser.read(1).decode('utf-8'), end='')
 
-    read_cmd()
+    #read_cmd()
     time.sleep(0.01)
 
 window.close()

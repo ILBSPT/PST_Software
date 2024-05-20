@@ -34,6 +34,8 @@
 #include <I2Cdev.h>
 #include <MPU6050.h>
 #include <HX711.h>
+#include <Max6675.h>
+#include <ADS1X15.h>
 
 #include <LoRa.h>
 
@@ -52,10 +54,13 @@
 // specific I2C addresses may be passed as a parameter here
 // AD0 low = 0x68 (default for InvenSense evaluation board)
 // AD0 high = 0x69
-MPU6050 accelgyro;
 //MPU6050 accelgyro(0x69); // <-- use for AD0 high
-HX711 scale;
 
+MPU6050 accelgyro;
+HX711 scale;
+ADS1115 ADS(PRESSURE_AMP1_ADDR);
+MAX6675 thermocouple1(SPI_SCLK_PIN, TEMP_AMP1_SS_PIN, SPI_MISO_PIN);
+MAX6675 thermocouple2(SPI_SCLK_PIN, TEMP_AMP2_SS_PIN, SPI_MISO_PIN);
 
 int led_state = 0;
 
@@ -75,6 +80,14 @@ void echo_reply(command_t* cmd)
     }
     Serial.printf("CRC: %x\n", cmd->crc);
 #endif
+}
+
+void pressure_Setup(void)
+{
+    ADS.begin();
+    ADS.setGain(2); //2v
+    ADS.setDataRate(7); //fastest
+    ADS.setMode(1); //single mode
 }
 
 void loadCell_Setup(void)

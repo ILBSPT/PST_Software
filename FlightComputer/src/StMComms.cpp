@@ -76,12 +76,23 @@ int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
             //command_rep.data[12] = (imu_gz) & 0xff;
             command_rep.crc = 0x5151;
             
-            command_rep.size = 5;
+            //command_rep.size = 5;
+            //command_rep.data[0] = state;
+            //command_rep.data[1] = (tank_pressure >> 8) & 0xff;
+            //command_rep.data[2] = (tank_pressure) & 0xff;
+            //command_rep.data[3] = (tank_liquid >> 8) & 0xff;
+            //command_rep.data[4] = (tank_liquid) & 0xff;
+
+            command_rep.size = 9;
             command_rep.data[0] = state;
-            command_rep.data[1] = (tank_pressure >> 8) & 0xff;
-            command_rep.data[2] = (tank_pressure) & 0xff;
-            command_rep.data[3] = (tank_liquid >> 8) & 0xff;
-            command_rep.data[4] = (tank_liquid) & 0xff;
+            command_rep.data[1] = (tank_temp1 >> 8) & 0xff;
+            command_rep.data[2] = (tank_temp1) & 0xff;
+            command_rep.data[3] = (tank_temp2 >> 8) & 0xff;
+            command_rep.data[4] = (tank_temp2) & 0xff;
+            command_rep.data[5] = (tank_pressure1 >> 8) & 0xff;
+            command_rep.data[6] = (tank_pressure1) & 0xff;
+            command_rep.data[7] = (tank_pressure2 >> 8) & 0xff;
+            command_rep.data[8] = (tank_pressure2) & 0xff;
 
             write_command(&command_rep, interface);
 

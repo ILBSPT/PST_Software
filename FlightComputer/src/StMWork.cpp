@@ -19,8 +19,16 @@ int16_t imu_gx;
 int16_t imu_gy;
 int16_t imu_gz;
 
+int32_t weight;
+
 uint16_t tank_pressure = 0;
 uint16_t tank_liquid = 0;
+
+int16_t tank_pressure1;
+int16_t tank_pressure2;
+
+int16_t tank_temp1;
+int16_t tank_temp2;
 
 void idle_state(void) { return; }
 
@@ -151,14 +159,25 @@ void logger(void)
     command_rep.cmd = CMD_STATUS;
     command_rep.id = DEFAULT_ID;
 
-    command_rep.size = 2*2 + 1;
     //command_rep.size = 100; //test
 
+    command_rep.size = 9;
     command_rep.data[0] = state;
-    command_rep.data[1] = (tank_pressure >> 8) & 0xff;
-    command_rep.data[2] = (tank_pressure) & 0xff;
-    command_rep.data[3] = (tank_liquid >> 8) & 0xff;
-    command_rep.data[4] = (tank_liquid) & 0xff;
+    command_rep.data[1] = (tank_temp1 >> 8) & 0xff;
+    command_rep.data[2] = (tank_temp1) & 0xff;
+    command_rep.data[3] = (tank_temp2 >> 8) & 0xff;
+    command_rep.data[4] = (tank_temp2) & 0xff;
+    command_rep.data[5] = (tank_pressure1 >> 8) & 0xff;
+    command_rep.data[6] = (tank_pressure1) & 0xff;
+    command_rep.data[7] = (tank_pressure2 >> 8) & 0xff;
+    command_rep.data[8] = (tank_pressure2) & 0xff;
+    
+    //command_rep.size = 2*2 + 1;
+    //command_rep.data[1] = (tank_pressure >> 8) & 0xff;
+    //command_rep.data[2] = (tank_pressure) & 0xff;
+    //command_rep.data[3] = (tank_liquid >> 8) & 0xff;
+    //command_rep.data[4] = (tank_liquid) & 0xff;
+
     command_rep.crc = 0x5151;
 
     write_command(&command_rep, DEFAULT_LOG_INFERFACE);
@@ -166,12 +185,33 @@ void logger(void)
 
 void read_weight(void)
 {
-    Serial.printf("start ot read from hx711 %d\n", scale.is_ready());
     if (scale.is_ready()) {
-        long reading = scale.read();
-        Serial.print("HX711 reading: ");
-        Serial.println(reading);
+        weight = (int32_t)scale.read();
     } else {
         Serial.println("HX711 not found.");
     }
+}
+
+void read_temperature_1(void)
+{
+    float temp = thermocouple1.readCelsius();
+    tank_temp1 = (uint16_t)(temp * 10); 
+}
+
+void read_temperature_2(void)
+{
+    //TODO change for real sensor
+    //float temp = thermocouple1.readCelsius();
+    float temp = thermocouple2.readCelsius();
+    tank_temp2 = (uint16_t)(temp * 10); 
+}
+
+void read_pressure_1(void)
+{
+    tank_pressure1 = ADS.readADC(0);
+}
+
+void read_pressure_2(void)
+{
+    tank_pressure2 = ADS.readADC(1);
 }
