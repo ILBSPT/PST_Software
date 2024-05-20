@@ -109,8 +109,6 @@ long HX711::read() {
 	// Wait for the chip to become ready.
 	wait_ready();
 
-	Serial.printf("1\n");
-
 	// Define structures for reading data into.
 	unsigned long value = 0;
 	uint8_t data[3] = { 0 };
@@ -129,30 +127,28 @@ long HX711::read() {
 	// state after the sequence completes, insuring that the entire read-and-gain-set
 	// sequence is not interrupted.  The macro has a few minor advantages over bracketing
 	// the sequence between `noInterrupts()` and `interrupts()` calls.
-	//#if HAS_ATOMIC_BLOCK
-	//ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+	#if HAS_ATOMIC_BLOCK
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 
-	//#elif IS_FREE_RTOS
-	//// Begin of critical section.
-	//// Critical sections are used as a valid protection method
-	//// against simultaneous access in vanilla FreeRTOS.
-	//// Disable the scheduler and call portDISABLE_INTERRUPTS. This prevents
-	//// context switches and servicing of ISRs during a critical section.
-	//portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-	//portENTER_CRITICAL(&mux);
+	#elif IS_FREE_RTOS
+	// Begin of critical section.
+	// Critical sections are used as a valid protection method
+	// against simultaneous access in vanilla FreeRTOS.
+	// Disable the scheduler and call portDISABLE_INTERRUPTS. This prevents
+	// context switches and servicing of ISRs during a critical section.
+	portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+	portENTER_CRITICAL(&mux);
 
-	//#else
+	#else
 	// Disable interrupts.
 	noInterrupts();
-	Serial.printf("2\n");
-	//#endif
+	#endif
 
 	// Pulse the clock pin 24 times to read the data.
 	data[2] = SHIFTIN_WITH_SPEED_SUPPORT(DOUT, PD_SCK, MSBFIRST);
 	data[1] = SHIFTIN_WITH_SPEED_SUPPORT(DOUT, PD_SCK, MSBFIRST);
 	data[0] = SHIFTIN_WITH_SPEED_SUPPORT(DOUT, PD_SCK, MSBFIRST);
 
-	Serial.printf("3\n");
 	// Set the channel and the gain factor for the next reading using the clock pin.
 	for (unsigned int i = 0; i < GAIN; i++) {
 		digitalWrite(PD_SCK, HIGH);
@@ -164,20 +160,18 @@ long HX711::read() {
 		delayMicroseconds(1);
 		#endif
 	}
-	Serial.printf("4\n");
 
-	//#if IS_FREE_RTOS
-	//// End of critical section.
-	//portEXIT_CRITICAL(&mux);
+	#if IS_FREE_RTOS
+	// End of critical section.
+	portEXIT_CRITICAL(&mux);
 
-	//#elif HAS_ATOMIC_BLOCK
-	//}
+	#elif HAS_ATOMIC_BLOCK
+	}
 
-	//#else
-	//// Enable interrupts again.
+	#else
+	// Enable interrupts again.
 	interrupts();
-	//#endif
-	Serial.printf("5\n");
+	#endif
 
 	// Replicate the most significant bit to pad out a 32-bit signed integer
 	if (data[2] & 0x80) {
@@ -192,7 +186,6 @@ long HX711::read() {
 			| static_cast<unsigned long>(data[1]) << 8
 			| static_cast<unsigned long>(data[0]) );
 
-	Serial.printf("6\n");
 	return static_cast<long>(value);
 }
 
