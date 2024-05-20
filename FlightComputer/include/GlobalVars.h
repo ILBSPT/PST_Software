@@ -5,9 +5,13 @@
 
 #include <I2Cdev.h>
 #include <MPU6050.h>
+#include <HX711.h>
 
 //----------- IMU vars ------------
 extern MPU6050 accelgyro;
+
+//-----------LOADCELL--------------
+extern HX711 scale;
 
 //lattest readding s from the imu sensor
 extern int16_t imu_ax;

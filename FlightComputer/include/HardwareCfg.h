@@ -10,9 +10,12 @@
 #define Pressure_PIN 15
 #define TankL_PIN 0
 
-#define Flash_SS_PIN 5
-//#define Flash_SS_PIN 39
+//#define Flash_SS_PIN 5
+#define Flash_SS_PIN 25
 #define LoRa_SS_PIN 11
+
+#define LOADCELL_OUT_PIN 32 
+#define LOADCELL_SCK_PIN 33
 
 #define SERIAL_BAUD 115000
 #define SERIAL2_BAUD 115200

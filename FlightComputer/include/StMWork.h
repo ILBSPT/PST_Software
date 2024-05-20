@@ -28,4 +28,6 @@ void imu_pid_calibration(void);
 void read_IMU(void); 
 
 void logger(void);
+void read_weight(void);
+
 #endif

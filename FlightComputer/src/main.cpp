@@ -33,6 +33,7 @@
 // for both classes must be in the include path of your project
 #include <I2Cdev.h>
 #include <MPU6050.h>
+#include <HX711.h>
 
 #include <LoRa.h>
 
@@ -53,7 +54,7 @@
 // AD0 high = 0x69
 MPU6050 accelgyro;
 //MPU6050 accelgyro(0x69); // <-- use for AD0 high
-
+HX711 scale;
 
 
 int led_state = 0;
@@ -76,8 +77,15 @@ void echo_reply(command_t* cmd)
 #endif
 }
 
+void loadCell_Setup(void)
+{
+    Serial.println("Load CELL starting");
+    scale.begin(LOADCELL_OUT_PIN, LOADCELL_SCK_PIN);
+}
+
 void gyroSetup(void)
 {
+    Serial.println("Gyro starting");
     accelgyro.initialize();
     Wire.setBufferSize(256);
  // verify connection
@@ -88,6 +96,7 @@ void gyroSetup(void)
 
 void Valves_Setup(void)
 {
+    Serial.println("Valves starting");
     pinMode(Vpu_PIN, OUTPUT);
     pinMode(V4_PIN, OUTPUT);
 
@@ -124,6 +133,8 @@ void setup() {
     LoRa_Setup();
 
     Valves_Setup();
+
+    loadCell_Setup();
 
     init_log();
 

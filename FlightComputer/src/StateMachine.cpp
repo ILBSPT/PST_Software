@@ -35,7 +35,8 @@ State_t state_machine[rocket_state_size] =
     //IDLE
     {
         .work = { {.chanel = read_IMU, .delay = 1000, .begin = 0},
-                  {.chanel = toggle_led, .delay = 1000, .begin = 0} },
+                  {.chanel = toggle_led, .delay = 1000, .begin = 0},
+                  {.chanel = read_weight, .delay = 500, .begin = 0} },
 
         .events = {},
 

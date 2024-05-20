@@ -9,6 +9,7 @@
 
 #include <I2Cdev.h>
 #include <MPU6050.h>
+#include <HX711.h>
 
 int16_t imu_ax;
 int16_t imu_ay;
@@ -161,4 +162,16 @@ void logger(void)
     command_rep.crc = 0x5151;
 
     write_command(&command_rep, DEFAULT_LOG_INFERFACE);
+}
+
+void read_weight(void)
+{
+    Serial.printf("start ot read from hx711 %d\n", scale.is_ready());
+    if (scale.is_ready()) {
+        long reading = scale.read();
+        Serial.print("HX711 reading: ");
+        Serial.println(reading);
+    } else {
+        Serial.println("HX711 not found.");
+    }
 }
