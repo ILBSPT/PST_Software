@@ -40,6 +40,9 @@ extern MAX6675 thermocouple2;
 extern int16_t tank_temp1;
 extern int16_t tank_temp2;
 
+//-----------Temperature AMP I2C--------------
+extern MCP9600 thermocouple3;
+//for now it uses the tank_temp2
 
 //---------------Valve state------------
 //extern uint8_t v1;

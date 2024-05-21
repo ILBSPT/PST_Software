@@ -36,6 +36,7 @@
 #include <HX711.h>
 #include <Max6675.h>
 #include <ADS1X15.h>
+#include <MCP9600.h>
 
 #include <LoRa.h>
 
@@ -120,6 +121,20 @@ void Valves_Setup(void)
     //pinMode(Pressure_PIN, INPUT);
 }
 
+void Flash_Setup()
+{
+    if (!SD.begin(Flash_SS_PIN)) {
+        printf("Unable to access SPI Flash chip\n");
+        return;
+    }
+
+    current_id = get_last_id() + 1;
+    Serial.print("current id");
+    Serial.print(current_id);
+    Serial.printf("\n");
+
+}
+
 void LoRa_Setup(void)
 {
   LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
@@ -155,7 +170,7 @@ void setup() {
 
     pressure_Setup();
 
-    init_log();
+    Flash_Setup();
 
     //setup trigger switch
     pinMode(TRIGGER, INPUT_PULLUP);

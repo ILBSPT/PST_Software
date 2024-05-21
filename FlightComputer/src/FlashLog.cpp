@@ -37,7 +37,7 @@ void stop_log()
     file.close();
 }
 
-static uint8_t get_last_id()
+uint8_t get_last_id()
 {
     File root = SD.open("/");
     uint8_t last_log_id = 0;
@@ -69,21 +69,6 @@ static uint8_t get_last_id()
     return last_log_id;
 }
 
-void init_log()
-{
-    bool created = false;
-
-    if (!SD.begin(Flash_SS_PIN)) {
-        printf("Unable to access SPI Flash chip\n");
-        return;
-    }
-
-    current_id = get_last_id() + 1;
-    Serial.print("current id");
-    Serial.print(current_id);
-    Serial.printf("\n");
-
-}
 
 void log_command(command_t* cmd)
 {

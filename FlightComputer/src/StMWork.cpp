@@ -212,6 +212,12 @@ void read_temperature_2(void)
    //Serial.println(temp);
 }
 
+void read_temperature_i2c(void)
+{
+    float temp = thermocouple3.getTempDelta();
+    tank_temp2 = (int16_t)(temp * 10.0); 
+}
+
 void read_pressure_1(void)
 {
     tank_pressure1 = ADS.readADC(0);

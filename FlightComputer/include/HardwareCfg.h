@@ -32,7 +32,6 @@
 #define SERIAL2_BAUD 115200
 
 #define PRESSURE_AMP1_ADDR 0x48
-#define PRESSURE_AMP2_ADDR 0x49
 
 
 typedef enum
