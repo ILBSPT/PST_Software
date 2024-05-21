@@ -127,11 +127,41 @@ buff = bytearray()
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
 layout = [[sg.Text("Rocket:\n", key = '_ROCKET_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Fill Station:\n", key = '_FILL_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16))],
+          [sg.Text("Statitstics:\n", key = '_STAT_ROCKET_', size = (10, 2), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Statitstics:\n", key = '_STAT_FILL_', size = (10, 2), auto_size_text=True, font=('Arial Bold', 16))],
           [sg.Exit()]]      
 
 window = sg.Window('Window that stays open', layout)      
 
+last_rocket_msg = -1
+last_fill_msg = -1
+
+total_rocket_timing = 0
+count_rocket_timing = 0
+total_fill_timing = 0
+count_fill_timing = 0
+
+worst_rocket_timming = 0
+worst_fill_timming = 0
+
+missed_fill_response = 0
+
 def print_rocket():
+
+    msg_time = time.perf_counter()
+
+    if(last_rocket_msg == -1):
+        last_rocket_msg = msg_time
+    else:
+        if(last_fill_msg != -1 and last_fill_msg < last_rocket_msg): 
+            missed_fill_packets += 1
+
+
+        last_rocket_msg = msg_time
+        time_diff = last_rocket_msg - msg_time
+        total_rocket_timing += time_diff
+        count_rocket_timing += 1
+        worst_rocket_timming = max(worst_rocket_timming, time_diff)
+
     state = int.from_bytes(buff[4:5], byteorder='big', signed=False)
     if state < 0 or state >= len(state_map_to_string_rocket): 
         print("bad state decoding")
@@ -152,10 +182,33 @@ def print_rocket():
     s2 = "Log Speed: " + str(round(log_speed, 0)) + "hz\nMissed packets: " + str(missed_packets) + "\n" 
     s = s1 + st1 + st2 + sp1 + sp2 + s2
     window['_ROCKET_OUT_'].update(s)
+
+    s1 = "Mean time: " + total_rocket_timing / count_rocket_timing + "\n"
+    s2 = "Worst time: " + worst_rocket_timming + "\n"
+    s = s1 + s2
+    window['_STAT_ROCKET_'].update(s)
+
     return
 
 def print_fill_station():
+    msg_time = time.perf_counter()
+
+    if(last_fill_msg == -1):
+        last_fill_msg = msg_time
+    else:
+        last_fill_msg = msg_time
+        time_diff = last_fill_msg - msg_time
+        total_fill_timing += time_diff
+        count_fill_timing += 1
+        worst_fill_timming = max(worst_fill_timming, time_diff)
+    
+    s1 = "Mean time: " + total_fill_timing / count_fill_timing + "\n"
+    s2 = "Worst time: " + worst_fill_timming + "\n"
+    s = s1 + s2
+    window['_STAT_FILL_'].update(s)
+    
     return
+
 
 def print_status():
     global missed_packets
