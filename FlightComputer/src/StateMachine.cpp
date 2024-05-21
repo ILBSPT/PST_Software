@@ -39,8 +39,8 @@ State_t state_machine[rocket_state_size] =
                   //{.chanel = read_weight, .delay = 500, .begin = 0},
                   {.chanel = read_pressure_1, .delay = 10, .begin = 0},
                   {.chanel = read_pressure_2, .delay = 10, .begin = 0},
-                  {.chanel = read_temperature_1, .delay = 10, .begin = 0},
-                  {.chanel = read_temperature_2, .delay = 10, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   {.chanel = logger, .delay = 20, .begin = 0} 
                 },
 

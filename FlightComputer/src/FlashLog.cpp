@@ -128,8 +128,15 @@ void dump_log(uint8_t id)
         return;
     }
 
+    delay(50);
     //first send the size of the file
-    Serial.printf("%c%c", (flashDump.size() >> 8) & 0xff, flashDump.size() & 0xff);
+    Serial.write((flashDump.size() >> 24) & 0xff);
+    Serial.write((flashDump.size() >> 16) & 0xff);
+    Serial.write((flashDump.size() >> 8) & 0xff);
+    Serial.write((flashDump.size() & 0xff));
+    
+
+    //Serial.print(flashDump.size());
 
     uint8_t buff[LOG_FILE_SIZE];
     while(flashDump.available())
@@ -164,6 +171,8 @@ void get_log_ids(uint8_t* files, uint8_t* files_index)
         Serial.print(entry.name());
         Serial.print(" ");
         Serial.print(*files_index);
+        Serial.print(" size: ");
+        Serial.print(entry.size());
         Serial.print(" \n");
 
         entry.close();

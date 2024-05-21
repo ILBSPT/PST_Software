@@ -15,8 +15,8 @@ if(len(sys.argv) > 2):
 else:
     ser = serial.Serial('COM3', 115200, timeout=ser_timeout) #set read timeout of 1s
 
-#log_delay = 0.01
-log_delay = 1
+log_delay = 0.01
+#log_delay = 1
 message_timeout = 0.25
 
 missed_packets = 0
@@ -138,7 +138,7 @@ buff = bytearray()
 
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
-layout_rocket = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_STATUS_OUT_', size = (40, 5), auto_size_text=True, font=('Arial Bold', 16))],      
+layout_rocket = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button('LED_OFF', key = '_LED_OFF_', size = (10,5)), sg.Text("Ax  Ay  Az  Gx  Gy  Gz", key = '_STATUS_OUT_', size = (40, 6), auto_size_text=True, font=('Arial Bold', 16))],      
           [sg.Button('Start Fueling', key = '_FUELING_', size = (10, 5)),
            sg.Button('Stop', key = '_STOP_', size = (10, 5)),
            sg.Button('Exec prog', key = '_EXEC_', size = (10, 5)),
@@ -206,7 +206,7 @@ def arm():
     cmd = bytearray([0x55, command_map['ARM'], cmd_id, 1, 1, 2, 3])
     ser.write(cmd)
     read_cmd()
-    if(len(buff) != 6 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[3]) != 1):
+    if(len(buff) != 7 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[4]) != 1):
         print("ARM1 error", buff)
         return
     else:
@@ -215,7 +215,7 @@ def arm():
     cmd = bytearray([0x55, command_map['ARM'], cmd_id, 1, 2, 2, 3])
     ser.write(cmd)
     read_cmd()
-    if(len(buff) != 6 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[3]) != 2):
+    if(len(buff) != 7 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[4]) != 2):
         print("ARM2 error", buff)
         return
     else:
@@ -225,7 +225,7 @@ def arm():
     cmd = bytearray([0x55, command_map['ARM'], cmd_id, 1, 3, 2, 3])
     ser.write(cmd)
     read_cmd()
-    if(len(buff) != 6 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[3]) != 3):
+    if(len(buff) != 7 or int(buff[1]) != command_map['ARM_ACK'] or int(buff[4]) != 3):
         print("ARM3 error", buff)
         return
     else:
@@ -235,19 +235,31 @@ def dump(id):
     cmd = bytearray([0x55, command_map['FLASH_DUMP'], cmd_id, 1, id, 2, 3])
     ser.write(cmd)
 
-    size1 = int.from_bytes(ser.read(1), 'little')
-    size2 = int.from_bytes(ser.read(1), 'little')
-    buff = [size1, size2]
+    #size1 = int.from_bytes(ser.read(1), 'little')
+    #size2 = int.from_bytes(ser.read(1), 'little')
+    ser._timeout = 5 
+    
+    buff = []
+    print("buff", buff)
+    for i in range(4):
+        ch = ser.read(1)
+        ch = int.from_bytes(ch, 'little')
+        buff.append(ch)
 
-    size = int.from_bytes(buff[0:2], byteorder='big', signed=True)
+    print("buff", buff[0], buff[1], buff[2], buff[3])
+    if(len(buff) < 4):
+        print("error not enouch time")
+        return
+
+    size = int.from_bytes(buff[0:4], byteorder='big', signed=False)
+    print("log size", size)
 
     #5 seconds to retreive dump data
-    ser.timeout = 5 
     res = ser.read(size)
     print("Log dump: [",''.join('{:02x} '.format(x) for x in res)[:-1], "]")
-    print(res)
-
-    ser.timeout = ser_timeout
+    #print(res)
+    print("Log size recieved", len(res))
+    ser._timeout = ser_timeout
     read_cmd()
 
 def print_status():

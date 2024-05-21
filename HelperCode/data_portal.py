@@ -3,7 +3,7 @@ import time
 import serial
 
 #mac
-#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
 #ser = serial.Serial('/dev/cu.usbserial-4', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
@@ -160,16 +160,17 @@ def print_fill_station():
 def print_status():
     global missed_packets
     global log_speed
-    if(len(buff) < 16):
-        print("bad status")
-        return
+    #if(len(buff) < 16):
+        #print("bad status")
+        #return
+
     #first 4 bytes of buffer are
     # 0 - 0x55
     # 1 - cmd
     # 2 - id
     # 3 - size
     id = int.from_bytes(buff[2:3], byteorder='big', signed=False)
-
+    print("id: ", id)
     if id == 0x1: return print_rocket()
     elif id == 0x2: return print_fill_station()
     else: return
@@ -209,79 +210,79 @@ def read_cmd():
     buff = bytearray()
     data_recv = 0
     begin = time.perf_counter()
-    
-    while ser.in_waiting > 0:
-        ch = ser.read(1)
-        ch = int.from_bytes(ch, 'little')
+    while True: 
+        while ser.in_waiting > 0:
+            ch = ser.read(1)
+            ch = int.from_bytes(ch, 'little')
 
-        if comm_state == sync_state:
-            if ch == 0x55:
-                buff = bytearray()
-                data_recv = 0
-                begin = time.perf_counter()
-                comm_state = cmd_state
+            if comm_state == sync_state:
+                if ch == 0x55:
+                    buff = bytearray()
+                    data_recv = 0
+                    begin = time.perf_counter()
+                    comm_state = cmd_state
+                    buff.append(ch)
+                else:
+                    print(chr(ch), end="")
+                    #print(str(ch).encode('utf-8'))
+
+            elif comm_state == cmd_state:
                 buff.append(ch)
-            else:
-                print(chr(ch), end="")
-                #print(str(ch).encode('utf-8'))
+                comm_state = id_state
 
-        elif comm_state == cmd_state:
-            buff.append(ch)
-            comm_state = id_state
+            elif comm_state == id_state:
+                buff.append(ch)
+                comm_state = size_state
 
-        elif comm_state == id_state:
-            buff.append(ch)
-            comm_state = size_state
+            elif comm_state == size_state:
+                buff.append(ch)
+                data_total = int(ch)
+                if data_total == 0:
+                    comm_state = crc_1_state
+                else:
+                    comm_state = data_state
 
-        elif comm_state == size_state:
-            buff.append(ch)
-            data_total = int(ch)
-            if data_total == 0:
-                comm_state = crc_1_state
-            else:
-                comm_state = data_state
+            elif comm_state == data_state:
+                buff.append(ch)
+                data_recv += 1
+                if data_total == data_recv:
+                    comm_state = crc_1_state
 
-        elif comm_state == data_state:
-            buff.append(ch)
-            data_recv += 1
-            if data_total == data_recv:
-                comm_state = crc_1_state
+            elif comm_state == crc_1_state:
+                buff.append(ch)
+                comm_state = crc_2_state
 
-        elif comm_state == crc_1_state:
-            buff.append(ch)
-            comm_state = crc_2_state
+            elif comm_state == crc_2_state: 
+                buff.append(ch)
+                comm_state = end_state
+        
+        end = time.perf_counter()
+        msec = (end - begin) 
+        #if(comm_state != sync_state): print("ms: ", msec)
+        if comm_state != sync_state and msec > message_timeout:
+            comm_state = sync_state
+            missed_packets += 1
+            print("command timeout", msec)
+            print("buffer recieved:", buff) 
+            return
 
-        elif comm_state == crc_2_state: 
-            buff.append(ch)
-            comm_state = end_state
-    
-    end = time.perf_counter()
-    msec = (end - begin) 
-    #if(comm_state != sync_state): print("ms: ", msec)
-    if comm_state != sync_state and msec > message_timeout:
-        comm_state = sync_state
-        missed_packets += 1
-        print("command timeout", msec)
-        print("buffer recieved:", buff) 
-        return
+        if msec > message_timeout:
+            print("command timeout", msec)
+            print("no cmd state: ", comm_state)
+            missed_packets += 1
+            return
 
-    if msec > message_timeout:
-        print("command timeout", msec)
-        print("no cmd state: ", comm_state)
-        missed_packets += 1
-        return
-
-    if comm_state == end_state:
-        comm_state = sync_state
-        print("ACK recieved:", len(buff))
-        print("command time", msec)
-        log_speed = 1 / ( end - last_log )
-        if(len(buff) > 1 and buff[1] == command_map['STATUS_ACK']):
-            print_status()
-        last_log = end
-        print("Cmd_ACK: [",''.join('{:02x} '.format(x) for x in buff)[:-1], "]")
-        #print(buff)
-        return
+        if comm_state == end_state:
+            comm_state = sync_state
+            print("ACK recieved:", len(buff))
+            print("command time", msec)
+            log_speed = 1 / ( end - last_log )
+            if(len(buff) > 1 and buff[1] == command_map['STATUS']):
+                print_status()
+            last_log = end
+            print("Cmd_ACK: [",''.join('{:02x} '.format(x) for x in buff)[:-1], "]")
+            #print(buff)
+            return
 
 
 
@@ -299,7 +300,7 @@ while True:
     #while ser.in_waiting > 0:
         #print(ser.read(1).decode('utf-8'), end='')
 
-    #read_cmd()
+    read_cmd()
     time.sleep(0.01)
 
 window.close()

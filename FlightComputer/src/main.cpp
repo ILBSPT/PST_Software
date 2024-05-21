@@ -59,8 +59,11 @@
 MPU6050 accelgyro;
 HX711 scale;
 ADS1115 ADS(PRESSURE_AMP1_ADDR);
-MAX6675 thermocouple1(SPI_SCLK_PIN, TEMP_AMP1_SS_PIN, SPI_MISO_PIN);
-MAX6675 thermocouple2(SPI_SCLK_PIN, TEMP_AMP2_SS_PIN, SPI_MISO_PIN);
+//MAX6675 thermocouple1(SPI_SCLK_PIN, TEMP_AMP1_SS_PIN, SPI_MISO_PIN);
+//MAX6675 thermocouple1(4,0,15);
+//MAX6675 thermocouple2(SPI_SCLK_PIN, TEMP_AMP2_SS_PIN, SPI_MISO_PIN);
+MAX6675 thermocouple1(27, 15, 26);
+MAX6675 thermocouple2(27, 0, 26);
 
 int led_state = 0;
 
@@ -84,6 +87,7 @@ void echo_reply(command_t* cmd)
 
 void pressure_Setup(void)
 {
+    Serial.println("Pressure amp starting");
     ADS.begin();
     ADS.setGain(2); //2v
     ADS.setDataRate(7); //fastest
@@ -118,7 +122,7 @@ void Valves_Setup(void)
 
 void LoRa_Setup(void)
 {
-  LoRa.setPins(5,4,36);
+  LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
   //LoRa.setSignalBandwidth(500E3);
   //LoRa.setCodingRate4(5);
   //LoRa.setSpreadingFactor(7);
@@ -148,6 +152,8 @@ void setup() {
     Valves_Setup();
 
     loadCell_Setup();
+
+    pressure_Setup();
 
     init_log();
 

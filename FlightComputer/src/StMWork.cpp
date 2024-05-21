@@ -10,6 +10,7 @@
 #include <I2Cdev.h>
 #include <MPU6050.h>
 #include <HX711.h>
+#include <Max6675.h>
 
 int16_t imu_ax;
 int16_t imu_ay;
@@ -195,7 +196,9 @@ void read_weight(void)
 void read_temperature_1(void)
 {
     float temp = thermocouple1.readCelsius();
-    tank_temp1 = (uint16_t)(temp * 10); 
+    tank_temp1 = (int16_t)(temp * 10.0); 
+   //Serial.print("C1 = "); 
+   //Serial.println(temp);
 }
 
 void read_temperature_2(void)
@@ -203,7 +206,10 @@ void read_temperature_2(void)
     //TODO change for real sensor
     //float temp = thermocouple1.readCelsius();
     float temp = thermocouple2.readCelsius();
-    tank_temp2 = (uint16_t)(temp * 10); 
+    tank_temp2 = (int16_t)(temp * 10.0); 
+   
+   //Serial.print("C2 = "); 
+   //Serial.println(temp);
 }
 
 void read_pressure_1(void)

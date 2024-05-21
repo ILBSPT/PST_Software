@@ -8,17 +8,22 @@
 #define LED_PIN 2
 #define TRIGGER 34 
 
-#define Vpu_PIN 25
-#define V4_PIN 26
+#define Vpu_PIN 13
+#define V4_PIN 13
 
 #define Pressure_PIN 15
 #define TankL_PIN 0
 
 //#define Flash_SS_PIN 5
 #define Flash_SS_PIN 25
-#define LoRa_SS_PIN 11
-#define TEMP_AMP1_SS_PIN 26
-#define TEMP_AMP2_SS_PIN 27
+#define LORA_SS_PIN 5
+//#define TEMP_AMP1_SS_PIN 26
+#define TEMP_AMP1_SS_PIN 0
+//#define TEMP_AMP2_SS_PIN 27
+#define TEMP_AMP2_SS_PIN 26
+
+#define LORA_RESET_PIN 14
+#define LORA_DIO0_PIN 36
 
 #define LOADCELL_OUT_PIN 32 
 #define LOADCELL_SCK_PIN 33
