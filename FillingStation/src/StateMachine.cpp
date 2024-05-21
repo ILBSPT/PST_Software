@@ -13,14 +13,14 @@ rocket_state_t state = IDLE;
 
 //need to add a stop and see how the executin function changes
 rocket_state_t comm_transition[rocket_state_size][cmd_size] = {  
-//                STATUS ABORT EXEC   STOP   FUELING    [Flight cmds]  RESUME
-/* Idle    */   {   -1 , ABORT, -1,   -1,    FUELING,  -1,-1,-1,-1,-1,    -1  },
-/* FUELING */   {   -1 , IDLE,  -1,   IDLE,  FUELING,  -1,-1,-1,-1,-1,    -1  },
-/* Prog1   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
-/* Prog2   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
-/* Prog3   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1  },
-/* Stop    */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,  PROG2 },
-/* Abort   */   {   -1 ,  -1,   -1,   -1,      IDLE,   -1,-1,-1,-1,-1,    -1  },
+//                STATUS ABORT EXEC   STOP   FUELING    [Flight cmds]  RESUME       [LOG]
+/* Idle    */   {   -1 , ABORT, -1,   -1,    FUELING,  -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
+/* FUELING */   {   -1 , IDLE,  -1,   IDLE,  FUELING,  -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
+/* Prog1   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
+/* Prog2   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
+/* Prog3   */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
+/* Stop    */   {   -1 , ABORT, -1, FUELING, FUELING,  -1,-1,-1,-1,-1,  PROG2,  -1,-1,-1,-1 },
+/* Abort   */   {   -1 ,  -1,   -1,   -1,      IDLE,   -1,-1,-1,-1,-1,    -1,   -1,-1,-1,-1 },
 };
 
 /*

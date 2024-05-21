@@ -27,15 +27,22 @@
 #include "StateMachine.h"
 #include "StMComms.h"
 #include "StMWork.h"
+#include "FlashLog.h"
 
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
 #include <I2Cdev.h>
 #include <MPU6050.h>
+#include <HX711.h>
+#include <Max6675.h>
+#include <ADS1X15.h>
+#include <MCP9600.h>
 
 #include <LoRa.h>
 
 #include <Crc.h>
+
+#include <SerialFlash.h>
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
@@ -49,8 +56,6 @@
 // AD0 high = 0x69
 MPU6050 accelgyro;
 //MPU6050 accelgyro(0x69); // <-- use for AD0 high
-
-
 
 int led_state = 0;
 
@@ -80,6 +85,20 @@ void gyroSetup(void)
     Serial.println("Testing device connections...");
     Serial.println(accelgyro.testConnection() ? "MPu6050 connection successful" : "MPu6050 connection failed");
     
+}
+
+void Flash_Setup()
+{
+    if (!SD.begin(Flash_SS_PIN)) {
+        printf("Unable to access SPI Flash chip\n");
+        return;
+    }
+
+    current_id = get_last_id() + 1;
+    Serial.print("current id");
+    Serial.print(current_id);
+    Serial.printf("\n");
+
 }
 
 void LoRa_Setup(void)
