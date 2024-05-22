@@ -262,7 +262,7 @@ def dump(id):
     ser._timeout = ser_timeout
     read_cmd()
 
-def print_status():
+def print_status_rocket():
     global missed_packets
     global log_speed
     #if(len(buff) < 16):
@@ -318,6 +318,43 @@ def print_status():
 
     #print("ax:", ax, "ay:", ay, "az:", az)
     #print("gx:", gx, "gy:", gy, "gz:", gz)
+
+def print_status_fill():
+    global missed_packets
+    global log_speed
+    #if(len(buff) < 16):
+        #print("bad status")
+        #return
+
+    state = int.from_bytes(buff[4:5], byteorder='big', signed=True)
+    if state < 0 or state >= len(state_map_to_string): 
+        print("bad state decoding", state)
+        return
+    
+    p1 = int.from_bytes(buff[5:7], byteorder='big', signed=True) 
+    l1 = int.from_bytes(buff[7:9], byteorder='big', signed=True) 
+
+    print("state", state)
+    s1 = "State: " + state_map_to_string[state] + "\n"
+    st1 = "P1: " + str(p1) + '\n'
+    sp1 = "L1: " + str(l1) + '\n'
+    print("state", state)
+    s1 = "State: " + state_map_to_string[state] + "\n"
+
+    s2 = "Log Speed: " + str(round(log_speed, 0)) + "hz\nMissed packets: " + str(missed_packets) + "\n" 
+
+    #s = s1 + sa + sg + s2
+    #s = s1 + sl + sp + s2
+
+    s = s1 + st1 + sp1 + s2
+    window['_STATUS_OUT_'].update(s)
+
+def print_status():
+    id = int.from_bytes(buff[2:3], byteorder='big', signed=False)
+    print("id: ", id)
+    if sys.argv[1] == 'r': return print_status_rocket()
+    elif sys.argv[1] == 'f': return print_status_fill()
+    else: return
 
 def read_cmd():
     global comm_state, sync_state, cmd_state, size_state, data_state, crc_1_state, crc_2_state, end_state
