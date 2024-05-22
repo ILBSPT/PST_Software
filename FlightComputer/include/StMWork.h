@@ -34,4 +34,5 @@ void read_temperature_1(void);
 void read_temperature_2(void);
 void read_pressure_1(void);
 void read_pressure_2(void);
+void read_temperature_i2c(void);
 #endif

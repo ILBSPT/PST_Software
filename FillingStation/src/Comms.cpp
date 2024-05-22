@@ -156,12 +156,12 @@ command_t* read_command(int* error, interface_t interface)
     //if timeout reset state
     if(*state != SYNC && msec > RS485_TIMEOUT_TIME_MS) //timeout
     {
-        //Serial2.println("timeout"); //debug
-        //Serial2.print("state: "); //debug
-        //Serial2.println(*state); //debug
+        Serial.println("timeout"); //debug
+        Serial.print("state: "); //debug
+        Serial.println(*state); //debug
 
-        //Serial2.print("cmd: "); //debug
-        //Serial2.println(command->cmd); //debug
+        Serial.print("cmd: "); //debug
+        Serial.println(command->cmd); //debug
 
         *state = SYNC;
         
@@ -172,7 +172,7 @@ command_t* read_command(int* error, interface_t interface)
     //if bad cr reset state
     else if(*state == END /* && check_crc(&command) */)
     {
-        //Serial2.printf("got cmd\n"); //debug
+        Serial.printf("got cmd\n"); //debug
         *state = SYNC;
 
         *error = CMD_READ_OK;

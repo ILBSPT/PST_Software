@@ -144,11 +144,10 @@ rocket_state_t event_handler()
 bool exec()
 {
     //printf("exec size %d work %x\n", size, work);
-    unsigned long end = millis();
     bool change = false;
     for(int i = 0; i < MAX_WORK_SIZE; i++)
     {
-
+        unsigned long end = millis();
         if(state_machine[state].work[i].chanel == NULL)
             continue;
 

@@ -41,6 +41,7 @@ State_t state_machine[rocket_state_size] =
                   {.chanel = read_pressure_2, .delay = 10, .begin = 0},
                   {.chanel = read_temperature_1, .delay = 250, .begin = 0},
                   {.chanel = read_temperature_2, .delay = 250, .begin = 0},
+                  //{.chanel = read_temperature_i2c, .delay = 100, .begin = 0},
                   {.chanel = logger, .delay = 20, .begin = 0} 
                 },
 
@@ -54,7 +55,7 @@ State_t state_machine[rocket_state_size] =
                   {.chanel = read_temperatures, .delay = 10, .begin = 0},
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} },
+                  {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = {},
 
@@ -175,11 +176,10 @@ rocket_state_t event_handler()
 bool exec()
 {
     //printf("exec size %d work %x\n", size, work);
-    unsigned long end = millis();
     bool change = false;
     for(int i = 0; i < MAX_WORK_SIZE; i++)
     {
-
+        unsigned long end = millis();
         if(state_machine[state].work[i].chanel == NULL)
             continue;
 

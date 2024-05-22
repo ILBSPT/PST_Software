@@ -115,15 +115,15 @@ void LoRa_Setup(void)
 void Valves_Setup(void)
 {
     pinMode(V1_PIN, OUTPUT);
-    pinMode(V2_PIN, OUTPUT);
-    pinMode(V3_PIN, OUTPUT);
+    //pinMode(V2_PIN, OUTPUT);
+    //pinMode(V3_PIN, OUTPUT);
 
     //pinMode(Pressure_PIN, INPUT);
 }
 
 void setup() {
 
-    Serial.begin(115200); //USBC serial
+    Serial.begin(SERIAL_BAUD); //USBC serial
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -133,7 +133,7 @@ void setup() {
     #endif
     
     gyroSetup();
-    LoRa_Setup();
+    //LoRa_Setup();
 
     Valves_Setup();
 
@@ -153,7 +153,7 @@ void setup() {
  */
 #ifndef DIGITAL_TARGET
 
-    Serial2.begin(115200);
+    Serial2.begin(SERIAL2_BAUD);
 #endif
 
     printf("Setup done\n");

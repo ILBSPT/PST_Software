@@ -8,6 +8,7 @@
 #include <HX711.h>
 #include <Max6675.h>
 #include <ADS1X15.h>
+#include <MCP9600.h>
 
 
 //----------- IMU vars ------------

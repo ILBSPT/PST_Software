@@ -102,7 +102,7 @@ void read_pressures_test(void)
 void read_pressures(void)
 {
     //Dummy function
-    read_pressures_test();
+    //read_pressures_test();
     return;
 }
 
@@ -121,7 +121,7 @@ void read_liquid_test(void)
 void calc_liquid(void)
 {
     //calculate amount of liquid in the tank
-    read_liquid_test();
+    //read_liquid_test();
     return;
 }
 
@@ -214,8 +214,16 @@ void read_temperature_2(void)
 
 void read_temperature_i2c(void)
 {
-    float temp = thermocouple3.getTempDelta();
-    tank_temp2 = (int16_t)(temp * 10.0); 
+    //float temp = thermocouple3.getTempDelta();
+    //tank_temp2 = (int16_t)(temp * 10.0); 
+    Serial.print("Thermocouple: ");
+    Serial.print(thermocouple3.getThermocoupleTemp());
+    Serial.print(" °C   Ambient: ");
+    Serial.print(thermocouple3.getAmbientTemp());
+    Serial.print(" °C   Temperature Delta: ");
+    Serial.print(thermocouple3.getTempDelta());
+    Serial.print(" °C");
+    Serial.println();
 }
 
 void read_pressure_1(void)

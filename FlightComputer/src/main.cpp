@@ -65,6 +65,7 @@ ADS1115 ADS(PRESSURE_AMP1_ADDR);
 //MAX6675 thermocouple2(SPI_SCLK_PIN, TEMP_AMP2_SS_PIN, SPI_MISO_PIN);
 MAX6675 thermocouple1(27, 15, 26);
 MAX6675 thermocouple2(27, 0, 26);
+MCP9600 thermocouple3;
 
 int led_state = 0;
 
@@ -95,6 +96,21 @@ void pressure_Setup(void)
     ADS.setMode(1); //single mode
 }
 
+void temp_i2c_Setup(void)
+{
+    Serial.println("Temp i2c amp starting");
+    thermocouple3.begin(0x60);
+    thermocouple3.setThermocoupleType(TYPE_K);
+    //check if the sensor is connected
+    if(thermocouple3.isConnected()){
+        Serial.println("Device will acknowledge!");
+    }
+    else {
+        Serial.println("Device did not acknowledge! Freezing.");
+        while(1); //hang forever
+    }
+}
+
 void loadCell_Setup(void)
 {
     Serial.println("Load CELL starting");
@@ -116,7 +132,7 @@ void Valves_Setup(void)
 {
     Serial.println("Valves starting");
     pinMode(Vpu_PIN, OUTPUT);
-    pinMode(V4_PIN, OUTPUT);
+    //pinMode(V4_PIN, OUTPUT);
 
     //pinMode(Pressure_PIN, INPUT);
 }
@@ -152,7 +168,7 @@ void LoRa_Setup(void)
 
 void setup() {
 
-    Serial.begin(115200); //USBC serial
+    Serial.begin(SERIAL_BAUD); //USBC serial
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -169,6 +185,8 @@ void setup() {
     loadCell_Setup();
 
     pressure_Setup();
+
+    //temp_i2c_Setup();
 
     Flash_Setup();
 
@@ -187,7 +205,7 @@ void setup() {
  */
 #ifndef DIGITAL_TARGET
 
-    Serial2.begin(115200);
+    Serial2.begin(SERIAL2_BAUD);
 #endif
 
     printf("Setup done\n");

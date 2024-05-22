@@ -92,13 +92,14 @@ void echo_reply(void)
         error == CMD_READ_OK &&
         cmd->cmd == CMD_STATUS) 
     {
+        Serial.println("send response");
         /* Update rocket tank values */
         tank_pressure =  (cmd->data[1] << 8) + (cmd->data[2]);
         tank_liquid =  (cmd->data[3] << 8) + (cmd->data[4]);
 
         /* Send response to the bus*/
         command_t command_rep;
-        command_rep.cmd = CMD_STATUS_ACK;
+        command_rep.cmd = CMD_STATUS;
         command_rep.id = DEFAULT_ID;
 
         command_rep.size = 2*4 + 1;
