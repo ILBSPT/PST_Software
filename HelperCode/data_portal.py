@@ -3,13 +3,14 @@ import time
 import serial
 
 #mac
-ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
-#ser = serial.Serial('/dev/cu.usbserial-4', 115200, timeout=0.015) #set read timeout of 1s
+#ser = serial.Serial('/dev/cu.usbserial-0001', 115200, timeout=0.015) #set read timeout of 1s
+ser = serial.Serial('/dev/cu.usbmodem1301', 115200, timeout=0.015) #set read timeout of 1s
 #windows
 #ser = serial.Serial('COM3', 115200, timeout=0.01) #set read timeout of 1s
 
 log_delay = 0.01
-message_timeout = 0.3
+message_timeout = 0.05
+#message_timeout = 0.5
 
 missed_packets = 0
 log_speed = 0
@@ -127,7 +128,7 @@ buff = bytearray()
 sg.theme('DarkAmber')    # Keep things interesting for your users
 
 layout = [[sg.Text("Rocket:\n", key = '_ROCKET_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Fill Station:\n", key = '_FILL_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16))],
-          [sg.Text("Statitstics:\n", key = '_STAT_ROCKET_', size = (10, 2), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Statitstics:\n", key = '_STAT_FILL_', size = (10, 2), auto_size_text=True, font=('Arial Bold', 16))],
+          [sg.Text("Statitstics:\n", key = '_STAT_ROCKET_', size = (25, 5), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Statitstics:\n", key = '_STAT_FILL_', size = (25, 5), auto_size_text=True, font=('Arial Bold', 16))],
           [sg.Exit()]]      
 
 window = sg.Window('Window that stays open', layout)      
@@ -144,22 +145,27 @@ worst_rocket_timming = 0
 worst_fill_timming = 0
 
 missed_fill_response = 0
+correct_fill_response = 0
 
 def print_rocket():
-
+    global last_rocket_msg, total_rocket_timing, count_rocket_timing, worst_rocket_timming, missed_fill_response, correct_fill_response
+    global last_fill_msg
     msg_time = time.perf_counter()
 
+    count_rocket_timing += 1
     if(last_rocket_msg == -1):
         last_rocket_msg = msg_time
     else:
         if(last_fill_msg != -1 and last_fill_msg < last_rocket_msg): 
-            missed_fill_packets += 1
+            missed_fill_response += 1
+        else:
+            correct_fill_response += 1
 
 
+        time_diff = msg_time - last_rocket_msg
         last_rocket_msg = msg_time
-        time_diff = last_rocket_msg - msg_time
         total_rocket_timing += time_diff
-        count_rocket_timing += 1
+        print("time diff", time_diff)
         worst_rocket_timming = max(worst_rocket_timming, time_diff)
 
     state = int.from_bytes(buff[4:5], byteorder='big', signed=False)
@@ -183,30 +189,43 @@ def print_rocket():
     s = s1 + st1 + st2 + sp1 + sp2 + s2
     window['_ROCKET_OUT_'].update(s)
 
-    s1 = "Mean time: " + total_rocket_timing / count_rocket_timing + "\n"
-    s2 = "Worst time: " + worst_rocket_timming + "\n"
-    s = s1 + s2
+    s1 = "Mean time: " + str(round(total_rocket_timing / count_rocket_timing, 5)) + "\n"
+    s2 = "Worst time: " + str(round(worst_rocket_timming, 5)) + "\n"
+    s3 = "Missed reponses: " + str(missed_fill_response) + "\n"
+    s4 = "Got reponses: " + str(correct_fill_response) + "\n"
+    s = s1 + s2 + s3 + s4
     window['_STAT_ROCKET_'].update(s)
 
     return
 
 def print_fill_station():
+    global last_fill_msg, total_fill_timing, count_fill_timing, worst_fill_timming
+
     msg_time = time.perf_counter()
 
     if(last_fill_msg == -1):
         last_fill_msg = msg_time
+        count_fill_timing += 1
     else:
+        time_diff = msg_time - last_rocket_msg
         last_fill_msg = msg_time
-        time_diff = last_fill_msg - msg_time
         total_fill_timing += time_diff
         count_fill_timing += 1
         worst_fill_timming = max(worst_fill_timming, time_diff)
     
-    s1 = "Mean time: " + total_fill_timing / count_fill_timing + "\n"
-    s2 = "Worst time: " + worst_fill_timming + "\n"
+    state = int.from_bytes(buff[4:5], byteorder='big', signed=False)
+    if state < 0 or state >= len(state_map_to_string_rocket): 
+        print("bad state decoding")
+        return
+
+    s = "State: " + state_map_to_string_rocket[state] + "\n"
+    window['_FILL_OUT_'].update(s)
+
+    s1 = "Mean time: " + str(round(total_fill_timing / count_fill_timing, 5)) + "\n"
+    s2 = "Worst time: " + str(round(worst_fill_timming, 5)) + "\n"
     s = s1 + s2
     window['_STAT_FILL_'].update(s)
-    
+
     return
 
 
@@ -263,6 +282,7 @@ def read_cmd():
     buff = bytearray()
     data_recv = 0
     begin = time.perf_counter()
+    msec = 0
     while True: 
         while ser.in_waiting > 0:
             ch = ser.read(1)
@@ -309,9 +329,22 @@ def read_cmd():
                 buff.append(ch)
                 comm_state = end_state
         
-        end = time.perf_counter()
-        msec = (end - begin) 
-        #if(comm_state != sync_state): print("ms: ", msec)
+            end = time.perf_counter()
+            msec = (end - begin) 
+            #if(comm_state != sync_state): print("ms: ", msec)
+
+            if comm_state == end_state and msec < message_timeout:
+                comm_state = sync_state
+                print("ACK recieved:", len(buff))
+                print("command time", msec)
+                log_speed = 1 / ( end - last_log )
+                if(len(buff) > 1 and buff[1] == command_map['STATUS']):
+                    print_status()
+                last_log = end
+                print("Cmd_ACK: [",''.join('{:02x} '.format(x) for x in buff)[:-1], "]")
+                #print(buff)
+                return
+
         if comm_state != sync_state and msec > message_timeout:
             comm_state = sync_state
             missed_packets += 1
@@ -320,23 +353,10 @@ def read_cmd():
             return
 
         if msec > message_timeout:
-            print("command timeout", msec)
+            print("command timeout2", msec)
             print("no cmd state: ", comm_state)
             missed_packets += 1
             return
-
-        if comm_state == end_state:
-            comm_state = sync_state
-            print("ACK recieved:", len(buff))
-            print("command time", msec)
-            log_speed = 1 / ( end - last_log )
-            if(len(buff) > 1 and buff[1] == command_map['STATUS']):
-                print_status()
-            last_log = end
-            print("Cmd_ACK: [",''.join('{:02x} '.format(x) for x in buff)[:-1], "]")
-            #print(buff)
-            return
-
 
 
 log_begin = time.perf_counter()
@@ -354,6 +374,6 @@ while True:
         #print(ser.read(1).decode('utf-8'), end='')
 
     read_cmd()
-    time.sleep(0.01)
+    #time.sleep(0.01)
 
 window.close()
