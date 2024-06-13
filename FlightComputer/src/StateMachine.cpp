@@ -42,7 +42,7 @@ State_t state_machine[rocket_state_size] =
                   {.chanel = read_temperature_1, .delay = 250, .begin = 0},
                   {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   //{.chanel = read_temperature_i2c, .delay = 100, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} 
+                  {.chanel = logger, .delay = 500, .begin = 0} 
                 },
 
         .events = {},
@@ -51,10 +51,13 @@ State_t state_machine[rocket_state_size] =
     },
     //FUELING
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { {.chanel = read_pressure_1, .delay = 10, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 10, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
-                  {.chanel = blink_led, .delay = 200, .begin = 0},
+                  //{.chanel = read_weight, .delay = 500, .begin = 0},
+                  {.chanel = blink_led, .delay = 500, .begin = 0},
                   {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = {},
@@ -63,12 +66,16 @@ State_t state_machine[rocket_state_size] =
     },
     //PROG1
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { 
+                  {.chanel = read_pressure_1, .delay = 10, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 10, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
+                  //{.chanel = read_weight, .delay = 500, .begin = 0},
                   {.chanel = Vpu_close, .delay = 500, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} },
+                  {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = { {.condition = prog1_stop_cond, .reaction = Vpu_open, .next_state = SAFETY} },
 
@@ -76,12 +83,15 @@ State_t state_machine[rocket_state_size] =
     },
     //PROG2
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { 
+                  {.chanel = read_pressure_1, .delay = 10, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 10, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
                   {.chanel = Vpu_open, .delay = 500, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} },
+                  {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = { {.condition = prog2_finish_cond, .reaction = Vpu_close, .next_state = FUELING} },
 
@@ -89,12 +99,14 @@ State_t state_machine[rocket_state_size] =
     },
     //SAFETY
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { {.chanel = read_pressure_1, .delay = 10, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 10, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
                   {.chanel = Vpu_open, .delay = 500, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} },
+                  {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = { {.condition = safety_stop_cond, .reaction = Vpu_close, .next_state = PROG1} },
 
@@ -104,7 +116,7 @@ State_t state_machine[rocket_state_size] =
     {
         .work = { {.chanel = read_IMU, .delay = 10, .begin = 0},
                   {.chanel = toggle_led, .delay = 500, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} },
+                  {.chanel = logger, .delay = 50, .begin = 0} },
 
         .events = {},
 
