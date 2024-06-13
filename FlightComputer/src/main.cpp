@@ -204,13 +204,13 @@ void setup() {
     digitalWrite(LORA_SS_PIN, HIGH);
     digitalWrite(Flash_SS_PIN, HIGH);
 
-    LoRa_Setup();
+    //LoRa_Setup();
     Flash_Setup();
 
     thermocouple1.begin();
     thermocouple2.begin();
-    //thermocouple1.setSPIspeed(1000000);
-    //thermocouple2.setSPIspeed(1000000);
+    thermocouple1.setSPIspeed(100000);
+    thermocouple2.setSPIspeed(100000);
     //setup trigger switch
     pinMode(TRIGGER, INPUT_PULLUP);
 
@@ -278,6 +278,8 @@ void loop() {
         //internal events changes of state
         state = command_state;
         state_machine[state].entry_time = millis();
+        for(int i = 0; i < MAX_WORK_SIZE; i++)
+            state_machine[state].work[i].begin = 0;
     }
 
     //used as the time base when dealing with sensor sampling rate and delays

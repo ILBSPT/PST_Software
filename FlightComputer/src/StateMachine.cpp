@@ -189,7 +189,8 @@ bool work_handler()
     bool change = false;
     for(int i = 0; i < MAX_WORK_SIZE; i++)
     {
-        unsigned long end = millis() - state_machine[state].entry_time;
+        unsigned long end = millis();
+        // - state_machine[state].entry_time;
         if(state_machine[state].work[i].chanel == NULL)
             continue;
 

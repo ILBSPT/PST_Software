@@ -1,29 +1,33 @@
 #include <arduino.h>
+#include <LoRa.h>
 
-#include <max6675.h>
+#include "HardwareCfg.h"
 
-
-MAX6675 thermocouple(18, 0, 19);
+#include "Wire.h"
 
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(115200);
 
   while (!Serial);
-  while (!Serial2);
+  
+  Wire.begin();
 
+  pinMode(LORA_SS_PIN, OUTPUT);
+  
+  LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
+  if (!LoRa.begin(868E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
 }
 
 void loop() {
-    // basic readout test, just print the current temp
   
-   //Serial.print("C = "); 
-   //Serial.println(thermocouple.readCelsius());
-   //Serial.print("F = ");
-   //Serial.println(thermocouple.readFahrenheit());
- 
-   // For the MAX6675 to update, you must delay AT LEAST 250ms between reads!
-   //delay(1000);
+  // read packet
+  int packetSize = LoRa.parsePacket();
+  if( packetSize > 0) Serial.printf("got message %d\n", packetSize);
+  while (packetSize != 0 && LoRa.available()) {
+    Serial.write((char)LoRa.read());
+  }
 
-  while(Serial2.available()) Serial.write(Serial2.read());
 }
