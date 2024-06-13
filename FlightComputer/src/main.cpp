@@ -205,10 +205,10 @@ void setup() {
     digitalWrite(Flash_SS_PIN, HIGH);
 
     LoRa_Setup();
-    //Flash_Setup();
+    Flash_Setup();
 
-    //thermocouple1.begin();
-    //thermocouple2.begin();
+    thermocouple1.begin();
+    thermocouple2.begin();
     //thermocouple1.setSPIspeed(1000000);
     //thermocouple2.setSPIspeed(1000000);
     //setup trigger switch
