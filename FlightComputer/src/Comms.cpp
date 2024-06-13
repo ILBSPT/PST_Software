@@ -30,9 +30,12 @@ void write_command(command_t* cmd, interface_t interface)
     switch(interface)
     {
         case LoRa_INTERFACE:
+        {
             LoRa.beginPacket();
-            LoRa.write(buff, size);
+            int sz = LoRa.write(buff, size);
             LoRa.endPacket(true);
+            //Serial.printf("Lora sent %d packets\n");
+        }
         break;
         case RS485_INTERFACE:
             Serial2.write(buff, size);
@@ -121,8 +124,15 @@ command_t* read_command(int* error, interface_t interface)
     {
         case LoRa_INTERFACE:
         {
+            //Work arourd for lora to not spam the spi bus
+            static unsigned int begin = 0, end = 0;
+            end = millis();
+            if(end - begin < 1) break;
+            begin = end;
+            
             int packetSize = LoRa.parsePacket();
-            while(packetSize-- > 0 && LoRa.available())
+            //if(packetSize > 0) Serial.printf("packet recived %d\n", packetSize);
+            while(packetSize != 0 && LoRa.available() && *state != END)
             {
                 read_byte = LoRa.read();
                 *state = parse_input(read_byte, command, *state);
@@ -132,7 +142,7 @@ command_t* read_command(int* error, interface_t interface)
 
         case RS485_INTERFACE:
         {
-            while(Serial2.available())
+            while(Serial2.available() && *state != END)
             {
                 read_byte = Serial2.read();
                 *state = parse_input(read_byte, command, *state);
@@ -142,7 +152,7 @@ command_t* read_command(int* error, interface_t interface)
         
         case Uart_INTERFACE:
         {
-            while(Serial.available())
+            while(Serial.available() && *state != END)
             {
                 read_byte = Serial.read();
                 *state = parse_input(read_byte, command, *state);
@@ -160,7 +170,7 @@ command_t* read_command(int* error, interface_t interface)
     //if timeout reset state
     if(*state != SYNC && msec > RS485_TIMEOUT_TIME_MS) //timeout
     {
-        Serial.printf("reset\n"); //debug
+        Serial.printf("TIMEOUT\n"); //debug
         *state = SYNC;
         
         *error = CMD_READ_TIMEOUT;
@@ -170,6 +180,7 @@ command_t* read_command(int* error, interface_t interface)
     //if bad cr reset state
     else if(*state == END && command->id == DEFAULT_ID /* && check_crc(&command) */)
     {
+        Serial.printf("got message\n");
         *state = SYNC;
 
         *error = CMD_READ_OK;
@@ -179,6 +190,7 @@ command_t* read_command(int* error, interface_t interface)
     }
     else if(*state == END)
     {
+        Serial.printf("crc error\n");
         *state = SYNC;
 
         *error = CMD_READ_BAD_CRC;

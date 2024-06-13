@@ -10,6 +10,7 @@
 #include <limits.h>
 
 rocket_state_t state = IDLE; 
+//rocket_state_t state = READY; 
 
 //need to add a stop and see how the executin function changes
 rocket_state_t comm_transition[rocket_state_size][cmd_size] = {  
@@ -37,12 +38,12 @@ State_t state_machine[rocket_state_size] =
         .work = { {.chanel = read_IMU, .delay = 1000, .begin = 0},
                   {.chanel = toggle_led, .delay = 1000, .begin = 0},
                   //{.chanel = read_weight, .delay = 500, .begin = 0},
-                  {.chanel = read_pressure_1, .delay = 10, .begin = 0},
-                  {.chanel = read_pressure_2, .delay = 10, .begin = 0},
-                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
-                  {.chanel = read_temperature_2, .delay = 250, .begin = 0},
+                  {.chanel = read_pressure_1, .delay = 1000, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 1000, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 1000, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 1000, .begin = 250},
                   //{.chanel = read_temperature_i2c, .delay = 100, .begin = 0},
-                  {.chanel = logger, .delay = 20, .begin = 0} 
+                  {.chanel = logger, .delay = 200, .begin = 0} 
                 },
 
         .events = {},
@@ -51,9 +52,11 @@ State_t state_machine[rocket_state_size] =
     },
     //FUELING
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
-                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
+        .work = { {.chanel = read_pressure_1, .delay = 50, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 50, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 100},
+                  {.chanel = calc_liquid, .delay = 50, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
                   {.chanel = logger, .delay = 50, .begin = 0} },
 
@@ -63,11 +66,14 @@ State_t state_machine[rocket_state_size] =
     },
     //PROG1
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
-                  {.chanel = calc_liquid, .delay = 10, .begin = 0},
-                  {.chanel = Vpu_close, .delay = 500, .begin = 0},
+        .work = { 
+                  {.chanel = read_pressure_1, .delay = 50, .begin = 0},
+                  {.chanel = read_pressure_2, .delay = 50, .begin = 0},
+                  {.chanel = read_temperature_1, .delay = 250, .begin = 0},
+                  {.chanel = read_temperature_2, .delay = 250, .begin = 100},
+                  {.chanel = calc_liquid, .delay = 50, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
+                  {.chanel = Vpu_close, .delay = 500, .begin = 0}, //safety
                   {.chanel = logger, .delay = 20, .begin = 0} },
 
         .events = { {.condition = prog1_stop_cond, .reaction = Vpu_open, .next_state = SAFETY} },
@@ -76,8 +82,7 @@ State_t state_machine[rocket_state_size] =
     },
     //PROG2
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { 
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
                   {.chanel = Vpu_open, .delay = 500, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
@@ -89,8 +94,7 @@ State_t state_machine[rocket_state_size] =
     },
     //SAFETY
     {
-        .work = { {.chanel = read_pressures, .delay = 10, .begin = 0},
-                  {.chanel = read_temperatures, .delay = 10, .begin = 0},
+        .work = { 
                   {.chanel = calc_liquid, .delay = 10, .begin = 0},
                   {.chanel = Vpu_open, .delay = 500, .begin = 0},
                   {.chanel = blink_led, .delay = 200, .begin = 0},
@@ -173,14 +177,17 @@ rocket_state_t event_handler()
     return -1;
 }
 
-bool exec()
+bool work_handler()
 {
-    //printf("exec size %d work %x\n", size, work);
     bool change = false;
     for(int i = 0; i < MAX_WORK_SIZE; i++)
     {
-        unsigned long end = millis();
+        unsigned long end = millis() - state_machine[state].entry_time;
         if(state_machine[state].work[i].chanel == NULL)
+            continue;
+
+        //avoid overflows when it produce negative msec
+        if(end < state_machine[state].work[i].begin)
             continue;
 
         int msec = (end - state_machine[state].work[i].begin);

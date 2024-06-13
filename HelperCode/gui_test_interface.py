@@ -17,7 +17,8 @@ else:
 
 log_delay = 0.01
 #log_delay = 1
-message_timeout = 0.25
+message_timeout = 1
+#message_timeout = 0.1
 
 missed_packets = 0
 log_speed = 0
@@ -161,7 +162,7 @@ layout_fill = [[sg.Button('LED_ON', key = '_LED_ON_', size = (10,5)), sg.Button(
           [ sg.Button('Status', key = "_STATUS_", size = (10,5)),
            sg.Button('Toggle log', key = '_LOG_TOGGLE_', size = (10,5)), sg.Exit()]]  
 
-layout_log_test = [[sg.Text("State: None", key = '_STATUS_OUT_', size = (20, 3), auto_size_text=True, font=('Arial Bold', 16))],
+layout_log_test = [[sg.Text("State: None", key = '_STATUS_OUT_', size = (20, 5), auto_size_text=True, font=('Arial Bold', 16))],
           [sg.Button('Stop', key = '_STOP_', size = (10, 5)),
            sg.Button('Ready', key = '_READY_', size = (10,5)),
            sg.Button('Arm', key = '_ARM_', size = (10,5))],
@@ -505,10 +506,10 @@ while True:
         elif event == '_STATUS_':
             cmd_launched = 1
             cmd = bytearray([0x55, command_map['STATUS'], cmd_id, 0, 0x20, 0x21])
+            print("Cmd: [",''.join('{:02x} '.format(x) for x in cmd)[:-1], "]")
             ser.write(cmd)
             read_cmd()
             #rep = ser.read(6)
-            #print(rep.decode('utf-8'))
             #print(bytearray(rep).hex())
         elif event == '_IMU_calib_':
             print("calibrate imu")
