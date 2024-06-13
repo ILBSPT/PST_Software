@@ -129,7 +129,7 @@ sg.theme('DarkAmber')    # Keep things interesting for your users
 
 layout = [[sg.Text("Rocket:\n", key = '_ROCKET_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Fill Station:\n", key = '_FILL_OUT_', size = (25, 6), auto_size_text=True, font=('Arial Bold', 16))],
           [sg.Text("Statitstics:\n", key = '_STAT_ROCKET_', size = (25, 5), auto_size_text=True, font=('Arial Bold', 16)), sg.Text("Statitstics:\n", key = '_STAT_FILL_', size = (25, 5), auto_size_text=True, font=('Arial Bold', 16))],
-          [sg.Exit()]]      
+          [sg.Button("Reset", key='_RESET_'), sg.Exit()]]      
 
 window = sg.Window('Window that stays open', layout)      
 
@@ -214,11 +214,11 @@ def print_fill_station():
         worst_fill_timming = max(worst_fill_timming, time_diff)
     
     state = int.from_bytes(buff[4:5], byteorder='big', signed=False)
-    if state < 0 or state >= len(state_map_to_string_rocket): 
+    if state < 0 or state >= len(state_map_to_string_fill): 
         print("bad state decoding")
         return
 
-    s = "State: " + state_map_to_string_rocket[state] + "\n"
+    s = "State: " + state_map_to_string_fill[state] + "\n"
     window['_FILL_OUT_'].update(s)
 
     s1 = "Mean time: " + str(round(total_fill_timing / count_fill_timing, 5)) + "\n"
@@ -370,6 +370,21 @@ while True:
     if event == sg.WIN_CLOSED or event == 'Exit':
         break      
     
+    if event == '_RESET_':
+        last_rocket_msg = -1
+        last_fill_msg = -1
+
+        total_rocket_timing = 0
+        count_rocket_timing = 0
+        total_fill_timing = 0
+        count_fill_timing = 0
+
+        worst_rocket_timming = 0
+        worst_fill_timming = 0
+
+        missed_fill_response = 0
+        correct_fill_response = 0 
+
     #while ser.in_waiting > 0:
         #print(ser.read(1).decode('utf-8'), end='')
 

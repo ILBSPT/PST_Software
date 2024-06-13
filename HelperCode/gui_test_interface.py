@@ -15,7 +15,7 @@ if(len(sys.argv) > 2):
 else:
     ser = serial.Serial('COM3', 115200, timeout=ser_timeout) #set read timeout of 1s
 
-log_delay = 0.01
+log_delay = 0.02
 #log_delay = 1
 message_timeout = 0.25
 
@@ -173,27 +173,31 @@ layout_log_test = [[sg.Text("State: None", key = '_STATUS_OUT_', size = (20, 3),
           [sg.Button('Status', key = "_STATUS_", size = (10,5)),
            sg.Button('Toggle Status', key = '_LOG_TOGGLE_', size = (10,5)), sg.Exit()]]      
 
+window_name = ""
 #layout = layout_rocket
 if(len(sys.argv) > 1):
     if(sys.argv[1] == 'r'):
         layout = layout_rocket
         state_map = state_map_rocket
         state_map_to_string = state_map_to_string_rocket
+        window_name = "Rocket"
     elif(sys.argv[1] == 'f'):
         layout = layout_fill
         state_map = state_map_fill
         state_map_to_string = state_map_to_string_fill
+        window_name = "Fill Station"
     elif(sys.argv[1] == 'l'):
         layout = layout_log_test
         state_map = state_map_rocket
         state_map_to_string = state_map_to_string_rocket
+        window_name = "Falsh logger"
 
 else:
     layout = layout_rocket
     state_map = state_map_rocket
     state_map_to_string = state_map_to_string_rocket
 
-window = sg.Window('Window that stays open', layout)      
+window = sg.Window(window_name, layout)      
 
 
 log_status = 0
