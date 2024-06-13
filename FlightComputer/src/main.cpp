@@ -63,8 +63,14 @@ ADS1115 ADS(PRESSURE_AMP1_ADDR);
 //MAX6675 thermocouple1(SPI_SCLK_PIN, TEMP_AMP1_SS_PIN, SPI_MISO_PIN);
 //MAX6675 thermocouple1(4,0,15);
 //MAX6675 thermocouple2(SPI_SCLK_PIN, TEMP_AMP2_SS_PIN, SPI_MISO_PIN);
-MAX6675 thermocouple1(27, 15, 26);
-MAX6675 thermocouple2(27, 0, 26);
+
+//MAX6675 thermocouple1(26, TEMP_AMP1_SS_PIN, 27);
+//MAX6675 thermocouple2(26, TEMP_AMP2_SS_PIN, 27);
+
+//MAX6675 thermocouple1(TEMP_AMP1_SS_PIN, SPI_MISO_PIN, SPI_SCLK_PIN);
+//MAX6675 thermocouple2(TEMP_AMP2_SS_PIN, SPI_MISO_PIN, SPI_SCLK_PIN);
+MAX6675 thermocouple1(TEMP_AMP1_SS_PIN, &SPI);
+MAX6675 thermocouple2(TEMP_AMP2_SS_PIN, &SPI);
 MCP9600 thermocouple3;
 
 int led_state = 0;
@@ -177,8 +183,9 @@ void setup() {
         Fastwire::setup(400, true);
     #endif
     
+    SPI.begin();
+
     //gyroSetup();
-    LoRa_Setup();
 
     Valves_Setup();
 
@@ -188,10 +195,25 @@ void setup() {
 
     //temp_i2c_Setup();
 
+    pinMode(TEMP_AMP1_SS_PIN, OUTPUT);
+    pinMode(TEMP_AMP2_SS_PIN, OUTPUT);
+    pinMode(LORA_SS_PIN, OUTPUT);
+    pinMode(Flash_SS_PIN, OUTPUT);
+    digitalWrite(TEMP_AMP1_SS_PIN, HIGH);
+    digitalWrite(TEMP_AMP2_SS_PIN, HIGH);
+    digitalWrite(LORA_SS_PIN, HIGH);
+    digitalWrite(Flash_SS_PIN, HIGH);
+
+    LoRa_Setup();
     Flash_Setup();
 
+    thermocouple1.begin();
+    thermocouple2.begin();
+    //thermocouple1.setSPIspeed(1000000);
+    //thermocouple2.setSPIspeed(1000000);
     //setup trigger switch
     pinMode(TRIGGER, INPUT_PULLUP);
+
 
     //Set board LED 
     pinMode(LED_PIN, OUTPUT);
@@ -199,6 +221,7 @@ void setup() {
 
     char arr[] = {'a','b','c','d'};
     //unsigned long crc_1 = crc((unsigned char*)arr, 4); 
+
 
 /*
  Removed during testing. See Target.h
@@ -209,6 +232,9 @@ void setup() {
 #endif
 
     printf("Setup done\n");
+
+
+    state_machine[state].entry_time = millis();
 }
 
 void loop() {
@@ -247,14 +273,21 @@ void loop() {
      * Do state transition
      */
     if(command_state != state) 
+    {
         //command change of state as priority over
         //internal events changes of state
         state = command_state;
+        state_machine[state].entry_time = millis();
+    }
+
+    //used as the time base when dealing with sensor sampling rate and delays
     else if(event_state != state)
+    {
         //only if comms haven't changed the state we can
         //acept a new state from internal events
         state = event_state;
-
+        state_machine[state].entry_time = millis();
+    }
 
     //delay(1);
 }

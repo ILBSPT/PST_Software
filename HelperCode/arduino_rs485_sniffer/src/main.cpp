@@ -69,7 +69,7 @@ typedef struct
     clock_t begin;
 } command_t;
 
-SoftwareSerial Serial2(2,3); //RX, TX
+SoftwareSerial Serial2(6,7); //RX, TX
 
 COMMAND_STATE state;
 command_t command;

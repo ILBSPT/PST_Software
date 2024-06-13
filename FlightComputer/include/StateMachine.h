@@ -3,9 +3,6 @@
 
 #include "Comms.h"
 
-#define WORK_HANDLER() exec()
-#define EVENT_HANDLER() event_handler()
-
 #define MAX_WORK_SIZE 10
 #define MAX_EVENT_SIZE 10
 
@@ -24,7 +21,9 @@ enum
     READY,
     ARMED,
     LAUNCH,
+
     ABORT,
+
     IMU_TUNE,
 
     rocket_state_size, //this needs to be the last state for size to work
@@ -49,6 +48,9 @@ typedef struct
     Work_t work[MAX_WORK_SIZE];
     Event_t events[MAX_EVENT_SIZE];
     rocket_state_t *comms;
+
+    //used as the time base when dealing with sensor sampling rate and delays
+    unsigned long entry_time; 
 } State_t;
 
 extern rocket_state_t state; 
@@ -57,6 +59,9 @@ extern State_t state_machine[rocket_state_size];
 
 
 rocket_state_t event_handler();
-bool exec();
+bool work_handler();
+#define WORK_HANDLER() work_handler()
+#define EVENT_HANDLER() event_handler()
+
 
 #endif

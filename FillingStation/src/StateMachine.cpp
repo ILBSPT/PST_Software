@@ -49,6 +49,7 @@ State_t state_machine[rocket_state_size] =
                   {.chanel = V1_close, .delay = 500},
                   {.chanel = V2_close, .delay = 500},
                   {.chanel = V3_close, .delay = 500}, 
+                  {.chanel = toggle_led, .delay = 500},
                   {.chanel = echo_reply, .delay = 10}, 
                 },
 

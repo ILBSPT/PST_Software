@@ -45,7 +45,8 @@ static COMMAND_STATE parse_input(uint8_t read_byte, command_t* command, COMMAND_
 {
     uint8_t state = cmd_state;
 
-    //printf("data %x\n", read_byte);
+    //Serial.print("data "); 
+    //Serial.println(read_byte);
     switch(state)
     {
         case SYNC:
@@ -117,7 +118,18 @@ command_t* read_command(int* error, interface_t interface)
     {
         case LoRa_INTERFACE:
         {
+            //Work arourd for lora to not spam the spi bus
+            static unsigned int begin = 0, end = 0;
+            end = millis();
+            if(end - begin < 1) break;
+            begin = end;
+            
             int packetSize = LoRa.parsePacket();
+            //if(packetSize > 0) 
+            //{
+                //Serial.print("packet recived");
+                //Serial.println(packetSize);
+            //}
             while(packetSize-- > 0 && LoRa.available())
             {
                 read_byte = LoRa.read();

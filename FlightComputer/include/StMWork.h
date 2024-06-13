@@ -14,8 +14,6 @@ void toggle_led_low(void);
 void toggle_led(void);
 void blink_led(void);
 
-void read_pressures(void);
-void read_temperatures(void);
 void calc_liquid(void);
 
 void Vpu_close(void);

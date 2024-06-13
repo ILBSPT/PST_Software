@@ -91,33 +91,6 @@ void imu_pid_calibration(void)
 
 }
 
-void read_pressures_test(void)
-{
-    tank_pressure = analogRead(Pressure_PIN);
-    //tank_pressure = (uint16_t)map(analogValue, 0, 4096, 0, 255);
-    //Serial.print("Pressure ");
-    //Serial.println(tank_pressure);
-    return;
-}
-void read_pressures(void)
-{
-    //Dummy function
-    //read_pressures_test();
-    return;
-}
-
-void read_temperatures(void)
-{
-    //Dummy function
-    return;
-}
-
-void read_liquid_test(void)
-{
-    tank_liquid = analogRead(TankL_PIN);
-    return;
-}
-
 void calc_liquid(void)
 {
     //calculate amount of liquid in the tank
@@ -195,21 +168,43 @@ void read_weight(void)
 
 void read_temperature_1(void)
 {
-    float temp = thermocouple1.readCelsius();
+    //float temp = thermocouple1.readCelsius();
+    //Serial.print("C1 = "); 
+    //Serial.println(temp);
+    
+    int status = thermocouple1.read();
+    Serial.print(millis());
+    Serial.print("\tstatus: ");
+    Serial.print(status);
+    uint16_t raw_data = thermocouple1.getRawData();
+    Serial.print("\nraw data: ");
+    Serial.printf("%hx", raw_data);
+    float temp = thermocouple1.getTemperature();
     tank_temp1 = (int16_t)(temp * 10.0); 
-   //Serial.print("C1 = "); 
-   //Serial.println(temp);
+    Serial.print("\ttemp1: ");
+    Serial.println(temp);
 }
 
 void read_temperature_2(void)
 {
     //TODO change for real sensor
     //float temp = thermocouple1.readCelsius();
-    float temp = thermocouple2.readCelsius();
+    //float temp = thermocouple2.readCelsius();
+    //Serial.print("C2 = "); 
+    //Serial.println(temp);
+    
+    int status = thermocouple2.read();
+    Serial.print(millis());
+    Serial.print("\tstatus: ");
+    Serial.print(status);
+    uint16_t raw_data = thermocouple2.getRawData();
+    Serial.print("\nraw data: ");
+    Serial.printf("%hx", raw_data);
+    float temp = thermocouple2.getTemperature();
     tank_temp2 = (int16_t)(temp * 10.0); 
+    Serial.print("\ttemp2: ");
+    Serial.println(temp);
    
-   //Serial.print("C2 = "); 
-   //Serial.println(temp);
 }
 
 void read_temperature_i2c(void)

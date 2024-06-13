@@ -87,23 +87,23 @@ void gyroSetup(void)
     
 }
 
-void Flash_Setup()
-{
-    if (!SD.begin(Flash_SS_PIN)) {
-        printf("Unable to access SPI Flash chip\n");
-        return;
-    }
+//void Flash_Setup()
+//{
+    //if (!SD.begin(Flash_SS_PIN)) {
+        //printf("Unable to access SPI Flash chip\n");
+        //return;
+    //}
 
-    current_id = get_last_id() + 1;
-    Serial.print("current id");
-    Serial.print(current_id);
-    Serial.printf("\n");
+    //current_id = get_last_id() + 1;
+    //Serial.print("current id");
+    //Serial.print(current_id);
+    //Serial.printf("\n");
 
-}
+//}
 
 void LoRa_Setup(void)
 {
-  LoRa.setPins(5,4,36);
+  LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
   LoRa.setSignalBandwidth(300E3);
   Serial.println("Lora starting");
   if (!LoRa.begin(868E6)) {
@@ -132,8 +132,9 @@ void setup() {
         Fastwire::setup(400, true);
     #endif
     
-    gyroSetup();
-    //LoRa_Setup();
+    //gyroSetup();
+    
+    LoRa_Setup();
 
     Valves_Setup();
 

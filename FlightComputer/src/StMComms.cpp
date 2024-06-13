@@ -9,6 +9,7 @@
 
 int run_command(command_t* cmd, rocket_state_t state, interface_t interface)
 {
+    Serial.printf("run command %d\n", cmd->cmd);
     command_t command_rep;
     command_rep.id = GROUND_ID;
     rocket_state_t return_state = state;

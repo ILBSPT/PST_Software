@@ -135,6 +135,24 @@ typedef enum
     END,
 } COMMAND_STATE;
 
+typedef enum
+{
+    LoRa_INTERFACE,
+    RS485_INTERFACE,
+    Uart_INTERFACE,
+    interface_t_size
+} interface_t;
+
+//#define DEFAULT_CMD_INTERFACE LoRa_INTERFACE 
+#define DEFAULT_CMD_INTERFACE Uart_INTERFACE 
+#define DEFAULT_LOG_INFERFACE RS485_INTERFACE
+#define DEFAULT_SYNC_INTERFACE Uart_INTERFACE
+
+#define GROUND_ID 0
+#define ROCKET_ID 1
+#define FILL_STATION_ID 2
+
+#define DEFAULT_ID ROCKET_ID 
 
 void write_command(command_t* cmd, interface_t interface);
 command_t* read_command(int* error, interface_t interface);
